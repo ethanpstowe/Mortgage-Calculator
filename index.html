@@ -206,13 +206,19 @@
     .dp-row { display: flex; gap: 10px; align-items: flex-end; }
     .dp-row .input-wrap { flex: 1; }
     .dp-equiv {
+      display: block; overflow: hidden;
+      max-height: 36px; margin-top: 6px; opacity: 1;
+      transition: max-height 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  margin-top 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  opacity 0.2s ease;
+    }
+    .dp-equiv span {
       display: inline-block; font-size: 12px; font-weight: 500;
       color: var(--text2); background: var(--bg);
       border: 1px solid var(--border); border-radius: 20px;
-      padding: 2px 10px; margin-top: 6px;
-      transition: opacity 0.15s ease;
+      padding: 2px 10px;
     }
-    .dp-equiv:empty { opacity: 0; pointer-events: none; }
+    .dp-equiv:empty { max-height: 0; margin-top: 0; opacity: 0; pointer-events: none; }
 
     /* ── Segmented control with sliding pill ── */
     .seg {
@@ -1080,11 +1086,11 @@ function setDPMode(mode) {
 
 function updateDPHint() {
   const el = $('dpEquiv');
-  if (dpMode !== 'percent') { el.textContent = ''; return; }
+  if (dpMode !== 'percent') { el.innerHTML = ''; return; }
   const hv  = parseDollar($('homeValue'));
   const pct = parseFloat($('downPayment').value) || 0;
-  if (!hv || !pct) { el.textContent = ''; return; }
-  el.textContent = '= ' + fmtC(Math.round(hv * pct / 100));
+  if (!hv || !pct) { el.innerHTML = ''; return; }
+  el.innerHTML = '<span>= ' + fmtC(Math.round(hv * pct / 100)) + '</span>';
 }
 
 // ─────────────────────────────────────────────
