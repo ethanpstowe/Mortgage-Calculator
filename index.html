@@ -1027,9 +1027,36 @@ function init() {
   sel.value = 'VA';
 
   // Formatted dollar inputs — format immediately, debounce calculation
-  $('homeValue').addEventListener('input', e => { formatDollarInput(e.target); updateDPHint(); debouncedCalc(); });
+  $('homeValue').addEventListener('input', e => {
+    formatDollarInput(e.target);
+    if (dpMode === 'dollar') {
+      const hv = parseDollar(e.target);
+      const dp = parseDollar($('downPayment'));
+      if (hv > 0 && dp > hv) {
+        $('downPayment').value = hv.toLocaleString('en-US');
+      }
+    }
+    updateDPHint();
+    debouncedCalc();
+  });
   $('downPayment').addEventListener('input', e => {
-    if (dpMode === 'dollar') formatDollarInput(e.target);
+    if (dpMode === 'dollar') {
+      formatDollarInput(e.target);
+      const hv = parseDollar($('homeValue'));
+      if (hv > 0) {
+        const dp = parseDollar(e.target);
+        if (dp > hv) {
+          e.target.value = hv.toLocaleString('en-US');
+          e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+        }
+      }
+    } else {
+      const pct = parseFloat(e.target.value) || 0;
+      if (pct > 100) {
+        e.target.value = '100';
+        e.target.setSelectionRange(3, 3);
+      }
+    }
     updateDPHint();
     debouncedCalc();
   });
