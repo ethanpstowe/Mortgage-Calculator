@@ -463,6 +463,47 @@
       .chart-section { flex-direction: column; align-items: center; }
       .chart-legend  { width: 100%; }
     }
+
+    /* ── Educational section ── */
+    .edu-section {
+      margin-top: 40px;
+    }
+    .edu-section-header {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .7px;
+      color: var(--text3); margin-bottom: 16px;
+      padding: 0 2px;
+    }
+    .edu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .edu-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 22px 20px 20px;
+      box-shadow: var(--shadow);
+    }
+    .edu-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -.2px;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    .edu-card p {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.65;
+      margin-bottom: 10px;
+    }
+    .edu-card p:last-child { margin-bottom: 0; }
+    @media (max-width: 640px) {
+      .edu-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -648,6 +689,56 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Educational content ── -->
+  <section class="edu-section" aria-label="Mortgage education">
+    <h2 class="edu-section-header">Understanding Your Mortgage</h2>
+    <div class="edu-grid">
+
+      <article class="edu-card">
+        <h3>What is PMI and When Can You Remove It?</h3>
+        <p>PMI stands for Private Mortgage Insurance. When you put down less than 20% of a home's purchase price, your lender sees the loan as higher risk — so they require you to carry insurance that protects them (not you) if you stop making payments.</p>
+        <p>The cost typically runs between 0.3% and 1.5% of your loan amount per year, spread across your monthly payments. On a $400,000 loan, that's roughly $100–$500 added to your bill every month.</p>
+        <p>The good news: PMI isn't permanent. Once you've paid down enough of your loan to own 20% of the home outright, PMI automatically drops off and your monthly payment goes down. Extra principal payments can get you there faster.</p>
+      </article>
+
+      <article class="edu-card">
+        <h3>How Your Down Payment Affects Your Monthly Payment</h3>
+        <p>Your down payment has a bigger impact on your monthly payment than most people realize. A larger down payment means a smaller loan, which means less interest charged every single month for the life of the loan.</p>
+        <p>The 20% threshold is especially significant. Below it, you'll owe PMI on top of your regular payment. Cross it, and that extra cost disappears entirely. On many homes, clearing that threshold can save $200 or more per month.</p>
+        <p>Even increasing your down payment by 5% can meaningfully reduce what you owe each month and save tens of thousands in interest over 30 years. Use the calculator above to see exactly how different down payment amounts change your numbers.</p>
+      </article>
+
+      <article class="edu-card">
+        <h3>15-Year vs. 30-Year Mortgage: Which is Right for You?</h3>
+        <p>A 30-year mortgage gives you a lower monthly payment by spreading the loan over a longer period. A 15-year mortgage charges less total interest and builds equity faster, but your monthly payment will be noticeably higher.</p>
+        <p>Here's a practical example: on a $350,000 loan at 6.5% interest, a 30-year mortgage costs about $2,212/month in principal and interest. The same loan over 15 years runs about $3,052/month — but you'd pay roughly $150,000 less in total interest over the life of the loan.</p>
+        <p>The right choice depends on your monthly budget and long-term goals. If cash flow is tight, the 30-year gives you breathing room. If you can comfortably handle the higher payment, the 15-year saves you a significant amount of money in the long run.</p>
+      </article>
+
+      <article class="edu-card">
+        <h3>How Extra Principal Payments Can Save You Thousands</h3>
+        <p>Every dollar you pay above your minimum goes directly toward your loan balance — not interest. Because interest is calculated on the remaining balance each month, a smaller balance means less interest charged every month going forward.</p>
+        <p>This effect compounds over time. Even an extra $200/month on a 30-year mortgage can shave 4–6 years off the loan and save $40,000–$80,000 in interest, depending on your rate and balance. It can also help you reach 20% equity sooner, eliminating PMI ahead of schedule.</p>
+        <p>Use the Extra Monthly Payment field in this calculator and flip to the comparison view to see exactly how much time and money you'd save with your specific numbers.</p>
+      </article>
+
+      <article class="edu-card">
+        <h3>Understanding Your Amortization Schedule</h3>
+        <p>The amortization schedule shows you a month-by-month breakdown of every payment you'll make over the life of the loan. Each row shows how much of that payment went to interest, how much reduced your balance, and where you stand on equity.</p>
+        <p>Early in the loan, the vast majority of each payment goes to interest — not principal. That's because interest is calculated as a percentage of the outstanding balance, which starts out high. As you pay down the balance over time, the interest portion shrinks and more of each payment chips away at the principal.</p>
+        <p>This is why the first few years of a mortgage can feel slow — you're not building much equity yet. The schedule helps you see how that shifts over time, and understand the real long-term cost of your loan.</p>
+      </article>
+
+      <article class="edu-card">
+        <h3>Property Taxes and Homeowners Insurance: What You Need to Know</h3>
+        <p>Most lenders bundle property taxes and homeowners insurance into your monthly payment and hold the funds in an escrow account. When the bills come due, the lender pays them on your behalf. This is why your total monthly payment is often higher than just principal and interest.</p>
+        <p>Property tax rates are set by your local government and can vary enormously — even within the same state. New Jersey homeowners pay over 2% of their home's value per year, while Hawaii homeowners pay less than 0.35%. Your county assessor determines your exact rate and assessed value.</p>
+        <p>Homeowners insurance rates are similarly location-dependent. States prone to hurricanes, flooding, or wildfires tend to have higher premiums. This calculator uses state-level averages to give you a reasonable estimate — but your actual costs may differ based on your specific location, home, and insurer.</p>
+      </article>
+
+    </div>
+  </section>
 
 </div>
 
