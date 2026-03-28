@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mortgage Calculator</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f2f2f7;
+      --card: #ffffff;
+      --blue: #007aff;
+      --blue-glow: rgba(0,122,255,.12);
+      --text: #1c1c1e;
+      --text2: #48484a;
+      --text3: #8e8e93;
+      --border: #e5e5ea;
+      --green: #30d158;
+      --orange: #ff9f0a;
+      --shadow: 0 2px 18px rgba(0,0,0,.07);
+      --r: 18px;
+      --r-sm: 10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* ── Header ── */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(242,242,247,.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 20px 14px;
+    }
+    .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -.5px; }
+    .header p  { font-size: 13px; color: var(--text3); margin-top: 2px; }
+
+    /* ── Layout ── */
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 20px 16px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--r);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .7px;
+      color: var(--text3); margin-bottom: 18px;
+      display: flex; align-items: center; gap: 7px;
+    }
+
+    /* ── Fields ── */
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field + .field { margin-top: 14px; }
+
+    label.lbl {
+      font-size: 13px; font-weight: 500; color: var(--text2);
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* Sub-label hint line */
+    .field-hint {
+      font-size: 12px; color: var(--text3); line-height: 1.4;
+      margin-top: 2px;
+    }
+
+    /* ── Info button ── */
+    .info-btn {
+      width: 16px; height: 16px; flex-shrink: 0;
+      border-radius: 50%;
+      border: 1.5px solid var(--text3);
+      background: transparent;
+      color: var(--text3);
+      font-size: 10px; font-style: italic; font-weight: 700;
+      font-family: Georgia, 'Times New Roman', serif;
+      cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0; line-height: 1;
+      transition: border-color .18s, background .18s, color .18s;
+    }
+    .info-btn:hover, .info-btn.open {
+      border-color: var(--blue);
+      background: var(--blue-glow);
+      color: var(--blue);
+    }
+
+    /* ── Popover ── */
+    .popover {
+      position: fixed;
+      background: #1c1c1e;
+      color: #f2f2f7;
+      border-radius: 13px;
+      padding: 14px 16px;
+      max-width: 290px;
+      font-size: 13px; line-height: 1.55;
+      box-shadow: 0 10px 40px rgba(0,0,0,.28);
+      z-index: 2000;
+      opacity: 0;
+      transform: translateY(-6px) scale(.97);
+      transition: opacity .16s ease, transform .16s ease;
+      pointer-events: none;
+    }
+    .popover.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    /* ── Input wrapper ── */
+    .input-wrap { position: relative; display: flex; align-items: center; }
+
+    .pfx, .sfx {
+      position: absolute; color: var(--text3);
+      font-size: 16px; pointer-events: none;
+      transition: color .2s;
+    }
+    .pfx { left: 12px; }
+    .sfx { right: 12px; }
+
+    input[type="text"], input[type="number"], select {
+      width: 100%; height: 46px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-sm);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px; font-family: inherit;
+      transition: border-color .2s, box-shadow .2s;
+      -webkit-appearance: none; appearance: none;
+    }
+    /* dollar text inputs */
+    input[type="text"] { padding: 0 12px 0 28px; }
+    /* number inputs with prefix */
+    input[type="number"] { padding: 0 12px 0 28px; }
+    input[type="number"].no-pfx { padding: 0 28px 0 12px; }
+    /* percent text input (no $ prefix) */
+    input[type="text"].pct-mode { padding: 0 28px 0 12px; }
+
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3.5px var(--blue-glow);
+    }
+
+    select {
+      padding: 0 36px 0 12px; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238e8e93' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    /* ── Down payment row ── */
+    .dp-row { display: flex; gap: 10px; align-items: flex-end; }
+    .dp-row .input-wrap { flex: 1; }
+
+    /* ── Segmented control with sliding pill ── */
+    .seg {
+      position: relative;
+      display: flex;
+      background: rgba(118,118,128,.18);
+      border-radius: 9px;
+      padding: 2px;
+      height: 46px;
+      flex-shrink: 0;
+    }
+    /* sliding pill */
+    .seg-pill {
+      position: absolute;
+      top: 2px; bottom: 2px;
+      left: 2px;
+      width: calc(50% - 2px);
+      background: var(--card);
+      border-radius: 7px;
+      box-shadow: 0 1px 5px rgba(0,0,0,.15);
+      pointer-events: none;
+      z-index: 0;
+      transition: left .22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .seg-pill.right { left: 50%; }
+    .seg button {
+      flex: 1; border: none; background: transparent;
+      border-radius: 7px; font-size: 15px; font-weight: 600;
+      color: var(--text3); cursor: pointer; padding: 0 18px;
+      font-family: inherit;
+      white-space: nowrap;
+      position: relative; z-index: 1;
+      transition: color .2s;
+    }
+    .seg button.active { color: var(--text); }
+
+    /* ── Rate + Term row ── */
+    .two-col { display: flex; gap: 12px; align-items: flex-start; margin-top: 14px; margin-bottom: 18px; }
+    .two-col .field { flex: 1; margin-top: 0 !important; }
+    /* prevent the sibling margin rule from misaligning flex children */
+    .two-col > .field + .field { margin-top: 0; }
+
+    /* ── Collapsible extra amount ── */
+    .slide {
+      overflow: hidden; max-height: 0;
+      opacity: 0; transition: max-height .3s ease, opacity .25s ease, margin-top .3s ease;
+    }
+    .slide.open { max-height: 100px; opacity: 1; margin-top: 14px; }
+
+    /* ── Monthly breakdown ── */
+    .breakdown { display: flex; flex-direction: column; }
+
+    .b-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 11px 0; border-bottom: 1px solid var(--border);
+    }
+    .b-row:last-child { border-bottom: none; }
+    .b-label {
+      font-size: 15px; color: var(--text2);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .b-val { font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
+    .b-total {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0 0;
+      border-top: 2px solid var(--border); margin-top: 2px;
+    }
+    .b-total .tl { font-size: 17px; font-weight: 600; }
+    .b-total .tv {
+      font-size: 30px; font-weight: 700; color: var(--blue);
+      font-variant-numeric: tabular-nums;
+    }
+    /* ── Output value fade transition ── */
+    .output {
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    .output.fading {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    /* ── Summary / Stats ── */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .stat { background: var(--bg); border-radius: var(--r-sm); padding: 14px 16px; }
+    .stat-lbl { font-size: 12px; color: var(--text3); margin-bottom: 5px; }
+    .stat-val { font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+
+    /* ── Comparison table ── */
+    .cmp-header {
+      display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 8px;
+      margin-bottom: 4px;
+    }
+    .cmp-header span {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .4px; color: var(--text3); text-align: center;
+    }
+    .cmp-header span:first-child { text-align: left; }
+
+    .cmp-row {
+      display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 8px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      align-items: center;
+    }
+    .cmp-row:last-child { border-bottom: none; }
+    .cmp-row .cl { font-size: 14px; color: var(--text2); }
+    .cmp-row .cv {
+      font-size: 14px; font-weight: 500; text-align: center;
+      font-variant-numeric: tabular-nums; color: var(--text);
+    }
+
+    /* ── No-PMI badge ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(48,209,88,.12); color: var(--green);
+      border-radius: 20px; padding: 4px 10px;
+      font-size: 13px; font-weight: 600;
+    }
+
+    /* ── Amortization collapsible ── */
+    .amort-trigger {
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; user-select: none; padding: 2px 0;
+    }
+    .amort-trigger h2 { font-size: 17px; font-weight: 600; }
+
+    .chevron {
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg); border-radius: 50%;
+      color: var(--text3); transition: transform .3s ease, background .2s;
+    }
+    .chevron.open { transform: rotate(180deg); background: var(--blue-glow); color: var(--blue); }
+
+    .amort-body { overflow: hidden; max-height: 0; transition: max-height .5s cubic-bezier(.4,0,.2,1); }
+    .amort-body.open { max-height: 20000px; }
+
+    .tbl-wrap {
+      position: relative;
+      margin-top: 18px; overflow-x: auto;
+      border-radius: var(--r-sm); border: 1px solid var(--border);
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+    }
+    /* right-edge fade gradient hints at horizontal scroll */
+    .tbl-wrap::after {
+      content: '';
+      position: absolute; top: 0; right: 0; bottom: 0;
+      width: 28px;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,.88));
+      pointer-events: none;
+      border-radius: 0 var(--r-sm) var(--r-sm) 0;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 720px; }
+
+    thead th {
+      background: var(--bg); padding: 10px 14px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .3px; color: var(--text3);
+      text-align: right; white-space: nowrap;
+    }
+    thead th:first-child { text-align: left; }
+
+    tbody td {
+      padding: 9px 14px; text-align: right;
+      color: var(--text2); border-bottom: 1px solid var(--bg);
+      font-variant-numeric: tabular-nums; white-space: nowrap;
+    }
+    tbody td:first-child { text-align: left; font-weight: 600; color: var(--text); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--blue-glow); }
+    .pmi-row td.pmi-cell { color: var(--text2); font-weight: 500; }
+
+    /* ── Loan Summary prominence ── */
+    #summaryCard {
+      background: linear-gradient(160deg, rgba(0,122,255,.04) 0%, #ffffff 55%);
+      border: 1px solid rgba(0,122,255,.14);
+      box-shadow: 0 4px 28px rgba(0,122,255,.09);
+    }
+    #summaryCard .card-title {
+      color: var(--text3);
+      letter-spacing: 1px;
+    }
+
+    /* ── Donut chart ── */
+    .chart-section {
+      display: none;
+      align-items: center;
+      gap: 20px;
+      padding: 18px 0 6px;
+      border-top: 1px solid var(--border);
+      margin-top: 6px;
+    }
+    .chart-section.visible { display: flex; }
+    .donut-wrap {
+      position: relative; flex-shrink: 0;
+      width: 130px; height: 130px;
+    }
+    .donut-wrap svg { width: 100%; height: 100%; }
+    .donut-center-text {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .donut-center-text .dct-lbl {
+      font-size: 10px; font-weight: 600; color: var(--text3);
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .donut-center-text .dct-val {
+      font-size: 15px; font-weight: 700; color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .chart-legend {
+      flex: 1; display: flex; flex-direction: column; gap: 9px;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 9px;
+    }
+    .legend-dot {
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+    }
+    .legend-label {
+      font-size: 13px; color: var(--text2); flex: 1;
+    }
+    .legend-val {
+      font-size: 13px; font-weight: 600; color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Empty state ── */
+    .empty { text-align: center; padding: 28px 0; color: var(--text3); font-size: 15px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 540px) {
+      .cmp-header, .cmp-row { grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+      .cmp-row .cl { font-size: 12px; }
+      .cmp-row .cv { font-size: 12px; }
+    }
+    @media (max-width: 480px) {
+      .wrap   { padding: 14px 10px; }
+      .card   { padding: 16px; }
+      .header { padding: 14px 16px 10px; }
+      .b-total .tv { font-size: 26px; }
+
+      /* keep Rate + Term side by side — just reduce gap */
+      .two-col { gap: 8px; margin-bottom: 14px; }
+
+      .stat-val  { font-size: 18px; }
+      .stat-grid { gap: 8px; }
+
+      /* chart: more breathing room on mobile */
+      .chart-section { gap: 16px; padding: 20px 0 10px; }
+      .chart-legend  { gap: 13px; }
+      .legend-item   { gap: 10px; }
+      .legend-label  { font-size: 12px; }
+      .legend-val    { font-size: 12px; }
+      .donut-wrap    { width: 110px; height: 110px; }
+
+      /* larger tap targets for $ / % toggle */
+      .seg         { height: 52px; }
+      .seg button  { font-size: 16px; padding: 0 20px; }
+      .seg-pill    { border-radius: 8px; }
+    }
+    @media (max-width: 380px) {
+      .two-col { gap: 6px; }
+      .chart-section { flex-direction: column; align-items: center; }
+      .chart-legend  { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <h1>Mortgage Calculator</h1>
+  <p>Enter your details to calculate your mortgage</p>
+</header>
+
+<div class="wrap">
+
+  <!-- ── Loan Details ── -->
+  <div class="card">
+    <div class="card-title">Loan Details</div>
+
+    <div class="field">
+      <label class="lbl" for="homeValue">Home Value</label>
+      <div class="input-wrap">
+        <span class="pfx">$</span>
+        <input type="text" inputmode="numeric" id="homeValue" placeholder="400,000" value="400,000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Down Payment</label>
+      <div class="dp-row">
+        <div class="input-wrap">
+          <span class="pfx" id="dpPfx">$</span>
+          <span class="sfx" id="dpSfx" style="display:none">%</span>
+          <input type="text" inputmode="numeric" id="downPayment" placeholder="40,000" value="40,000">
+        </div>
+        <div class="seg">
+          <div class="seg-pill" id="dpPill"></div>
+          <button id="btnDollar" class="active" onclick="setDPMode('dollar')">$</button>
+          <button id="btnPct"    onclick="setDPMode('percent')">%</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="field">
+        <label class="lbl" for="rate">
+          Interest Rate
+          <button class="info-btn" onclick="showTip(this,'rate')" aria-label="About interest rate">i</button>
+        </label>
+        <div class="input-wrap">
+          <input type="number" id="rate" class="no-pfx" step="0.01" min="0" max="30" value="6.82">
+          <span class="sfx">%</span>
+        </div>
+        <p class="field-hint">Defaulting to today's average 30-year fixed rate</p>
+      </div>
+      <div class="field">
+        <label class="lbl" for="term">
+          Loan Term
+          <button class="info-btn" onclick="showTip(this,'term')" aria-label="About loan term">i</button>
+        </label>
+        <select id="term">
+          <option value="360" selected>30 Years</option>
+          <option value="240">20 Years</option>
+          <option value="180">15 Years</option>
+          <option value="120">10 Years</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="state">State</label>
+      <select id="state">
+        <option value="">Select a state…</option>
+        <!-- default set to VA by JS in init() -->
+      </select>
+      <p class="field-hint">Your state affects your property tax rate, which is added to your monthly payment</p>
+    </div>
+  </div>
+
+  <!-- ── Extra Payments ── -->
+  <div class="card">
+    <div class="card-title">
+      Extra Principal Payments
+      <button class="info-btn" onclick="showTip(this,'extra')" aria-label="About extra principal payments">i</button>
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <select id="extraMode" onchange="handleExtraMode()">
+        <option value="none">None</option>
+        <option value="pmi">During PMI Only</option>
+        <option value="always">Entire Loan Duration</option>
+      </select>
+    </div>
+    <div class="slide" id="extraSlide">
+      <div class="field" style="margin-top:0">
+        <label class="lbl" for="extraAmt">Extra Monthly Payment</label>
+        <div class="input-wrap">
+          <span class="pfx">$</span>
+          <input type="text" inputmode="numeric" id="extraAmt" placeholder="200" value="200">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Monthly Breakdown ── -->
+  <div class="card">
+    <div class="card-title">Monthly Payment Breakdown</div>
+    <div class="breakdown">
+      <div class="b-row">
+        <span class="b-label">Principal &amp; Interest</span>
+        <span class="b-val output" id="rPI">—</span>
+      </div>
+      <div class="b-row">
+        <span class="b-label">
+          PMI
+          <button class="info-btn" onclick="showTip(this,'pmi')" aria-label="About PMI">i</button>
+        </span>
+        <span class="b-val output" id="rPMI">—</span>
+      </div>
+      <div class="b-row">
+        <span class="b-label">
+          Property Tax
+          <button class="info-btn" onclick="showTip(this,'tax')" aria-label="About property tax">i</button>
+        </span>
+        <span class="b-val output" id="rTax">—</span>
+      </div>
+      <div class="b-row">
+        <span class="b-label">
+          Homeowners Insurance
+          <button class="info-btn" onclick="showTip(this,'ins')" aria-label="About homeowners insurance">i</button>
+        </span>
+        <span class="b-val output" id="rIns">—</span>
+      </div>
+    </div>
+
+    <!-- donut chart -->
+    <div class="chart-section" id="chartSection">
+      <div class="donut-wrap">
+        <svg viewBox="0 0 100 100" id="donutSvg" aria-hidden="true"></svg>
+        <div class="donut-center-text">
+          <span class="dct-lbl">Split</span>
+          <span class="dct-val" id="donutTotal">—</span>
+        </div>
+      </div>
+      <div class="chart-legend" id="chartLegend"></div>
+    </div>
+
+    <div class="b-total">
+      <span class="tl">Total Monthly</span>
+      <span class="tv output" id="rTotal">—</span>
+    </div>
+  </div>
+
+  <!-- ── Summary ── -->
+  <div class="card" id="summaryCard">
+    <div class="card-title">Loan Summary</div>
+    <div id="summaryContent" class="output"><div class="empty">Enter loan details above to see summary.</div></div>
+  </div>
+
+  <!-- ── Amortization ── -->
+  <div class="card">
+    <div class="amort-trigger" onclick="toggleAmort()">
+      <h2>Amortization Schedule</h2>
+      <div class="chevron" id="chevron">
+        <svg width="11" height="7" viewBox="0 0 11 7" fill="none">
+          <path d="M1 1l4.5 4.5L10 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+    <div class="amort-body" id="amortBody">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Mo.</th>
+              <th>Beg. Balance</th>
+              <th>Payment</th>
+              <th>Interest</th>
+              <th>Principal</th>
+              <th>End Balance</th>
+              <th>PMI</th>
+              <th>Equity %</th>
+              <th>Equity $</th>
+            </tr>
+          </thead>
+          <tbody id="amortTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Popover (single, repositioned) -->
+<div class="popover" id="popover"></div>
+
+<script>
+'use strict';
+
+// ─────────────────────────────────────────────
+//  STATE DATA
+// ─────────────────────────────────────────────
+const STATES = {
+  AL:{n:'Alabama',      tax:0.41,ins:0.97}, AK:{n:'Alaska',       tax:1.04,ins:0.73},
+  AZ:{n:'Arizona',      tax:0.62,ins:0.59}, AR:{n:'Arkansas',     tax:0.62,ins:0.96},
+  CA:{n:'California',   tax:0.73,ins:0.52}, CO:{n:'Colorado',     tax:0.51,ins:0.66},
+  CT:{n:'Connecticut',  tax:2.14,ins:0.68}, DE:{n:'Delaware',     tax:0.57,ins:0.51},
+  FL:{n:'Florida',      tax:0.83,ins:1.61}, GA:{n:'Georgia',      tax:0.87,ins:0.89},
+  HI:{n:'Hawaii',       tax:0.32,ins:0.31}, ID:{n:'Idaho',        tax:0.69,ins:0.58},
+  IL:{n:'Illinois',     tax:2.23,ins:0.93}, IN:{n:'Indiana',      tax:0.87,ins:0.84},
+  IA:{n:'Iowa',         tax:1.57,ins:0.81}, KS:{n:'Kansas',       tax:1.41,ins:1.24},
+  KY:{n:'Kentucky',     tax:0.86,ins:0.85}, LA:{n:'Louisiana',    tax:0.55,ins:1.67},
+  ME:{n:'Maine',        tax:1.36,ins:0.65}, MD:{n:'Maryland',     tax:1.09,ins:0.65},
+  MA:{n:'Massachusetts',tax:1.23,ins:0.78}, MI:{n:'Michigan',     tax:1.54,ins:0.83},
+  MN:{n:'Minnesota',    tax:1.12,ins:0.91}, MS:{n:'Mississippi',  tax:0.65,ins:1.25},
+  MO:{n:'Missouri',     tax:1.01,ins:1.09}, MT:{n:'Montana',      tax:0.84,ins:0.68},
+  NE:{n:'Nebraska',     tax:1.73,ins:1.14}, NV:{n:'Nevada',       tax:0.60,ins:0.56},
+  NH:{n:'New Hampshire',tax:2.18,ins:0.63}, NJ:{n:'New Jersey',   tax:2.49,ins:0.83},
+  NM:{n:'New Mexico',   tax:0.80,ins:0.74}, NY:{n:'New York',     tax:1.72,ins:0.81},
+  NC:{n:'North Carolina',tax:0.84,ins:0.78},ND:{n:'North Dakota', tax:0.98,ins:0.88},
+  OH:{n:'Ohio',         tax:1.62,ins:0.82}, OK:{n:'Oklahoma',     tax:0.90,ins:1.29},
+  OR:{n:'Oregon',       tax:0.97,ins:0.61}, PA:{n:'Pennsylvania', tax:1.58,ins:0.68},
+  RI:{n:'Rhode Island', tax:1.63,ins:0.87}, SC:{n:'South Carolina',tax:0.57,ins:0.85},
+  SD:{n:'South Dakota', tax:1.31,ins:0.93}, TN:{n:'Tennessee',    tax:0.71,ins:0.90},
+  TX:{n:'Texas',        tax:1.80,ins:1.42}, UT:{n:'Utah',         tax:0.58,ins:0.55},
+  VT:{n:'Vermont',      tax:1.90,ins:0.61}, VA:{n:'Virginia',     tax:0.82,ins:0.66},
+  WA:{n:'Washington',   tax:0.98,ins:0.62}, WV:{n:'West Virginia',tax:0.59,ins:0.64},
+  WI:{n:'Wisconsin',    tax:1.85,ins:0.71}, WY:{n:'Wyoming',      tax:0.61,ins:0.60},
+};
+
+// ─────────────────────────────────────────────
+//  TOOLTIP CONTENT
+// ─────────────────────────────────────────────
+const TIPS = {
+  pmi:  "Private Mortgage Insurance (PMI) protects the lender — not you — if you default on the loan. It's required when your down payment is less than 20% of the home's value. Once you've built up 20% equity, PMI automatically drops off and your payment decreases.",
+  tax:  "Property tax is set by your local government and is a yearly fee based on your home's assessed value. It varies significantly by state and county. Your lender typically collects it monthly as part of your payment and holds it in escrow until the tax bill is due. Rates shown are based on state averages — actual rates vary by county.",
+  ins:  "Homeowners insurance covers your home and belongings against damage from fire, theft, storms, and other events. Lenders require it to protect their investment in your property. Like taxes, it's usually collected monthly and held in escrow.",
+  rate:  "Your interest rate is the annual cost of borrowing money, expressed as a percentage of the loan. A lower rate means lower monthly payments and less total interest paid. Even a 0.5% difference can mean tens of thousands of dollars over the life of a 30-year loan.",
+  term:  "Your loan term is how long you have to repay the loan. A 30-year term gives you lower monthly payments but you'll pay far more in total interest. A 15-year term costs more each month but you build equity faster and pay significantly less interest overall.",
+  extra: "Paying extra toward your principal each month reduces your loan balance faster than your regular payment alone. This shrinks the amount interest is calculated on, so you pay less interest overall and pay off the loan sooner. Extra payments can also help you reach 20% equity faster — eliminating PMI earlier and reducing your monthly payment. When you select an extra payment amount, this calculator shows a side-by-side comparison of your total interest, PMI costs, and payoff date with and without the extra payment.",
+};
+
+// ─────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+const fmtC = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n||0);
+const fmtD = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0);
+const fmtN = (n,d=1) => (n||0).toFixed(d);
+
+function payoffDate(months) {
+  const d = new Date();
+  d.setMonth(d.getMonth() + Math.round(months));
+  return d.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+}
+
+// ─────────────────────────────────────────────
+//  COMMA-FORMATTED DOLLAR INPUT
+// ─────────────────────────────────────────────
+function formatDollarInput(input) {
+  const selStart = input.selectionStart;
+  const oldVal   = input.value;
+
+  // Count digits before cursor to restore position after formatting
+  const digitsBeforeCursor = (oldVal.slice(0, selStart).match(/\d/g) || []).length;
+
+  // Strip everything except digits
+  const digits = oldVal.replace(/\D/g, '');
+  if (!digits) { input.value = ''; return; }
+
+  const formatted = parseInt(digits, 10).toLocaleString('en-US');
+  input.value = formatted;
+
+  // Restore cursor: find position after Nth digit
+  let count = 0, newPos = 0;
+  if (digitsBeforeCursor === 0) {
+    newPos = 0;
+  } else {
+    for (let i = 0; i < formatted.length; i++) {
+      if (/\d/.test(formatted[i])) count++;
+      if (count === digitsBeforeCursor) { newPos = i + 1; break; }
+    }
+    if (count < digitsBeforeCursor) newPos = formatted.length;
+  }
+  input.setSelectionRange(newPos, newPos);
+}
+
+function parseDollar(input) {
+  return parseFloat(input.value.replace(/,/g, '')) || 0;
+}
+
+// ─────────────────────────────────────────────
+//  POPOVER
+// ─────────────────────────────────────────────
+let activeBtn = null;
+
+function showTip(btn, key) {
+  const pop = $('popover');
+
+  // Toggle off if same button clicked again
+  if (activeBtn === btn) {
+    closeTip();
+    return;
+  }
+
+  if (activeBtn) activeBtn.classList.remove('open');
+  activeBtn = btn;
+  btn.classList.add('open');
+
+  pop.textContent = TIPS[key];
+
+  // Show off-screen first to measure height
+  pop.style.visibility = 'hidden';
+  pop.style.display = 'block';
+  pop.classList.remove('visible');
+  void pop.offsetWidth;
+
+  const rect   = btn.getBoundingClientRect();
+  const popW   = Math.min(290, window.innerWidth - 24);
+  const popH   = pop.offsetHeight;
+  const margin = 10;
+
+  let left = rect.left;
+  let top  = rect.bottom + 8;
+
+  // Clamp horizontally
+  if (left + popW > window.innerWidth - margin) left = window.innerWidth - popW - margin;
+  if (left < margin) left = margin;
+
+  // Flip above if no room below
+  if (top + popH > window.innerHeight - margin) top = rect.top - popH - 8;
+  if (top < margin) top = margin;
+
+  pop.style.left       = left + 'px';
+  pop.style.top        = top  + 'px';
+  pop.style.width      = popW + 'px';
+  pop.style.visibility = '';
+
+  requestAnimationFrame(() => pop.classList.add('visible'));
+}
+
+function closeTip() {
+  const pop = $('popover');
+  pop.classList.remove('visible');
+  if (activeBtn) { activeBtn.classList.remove('open'); activeBtn = null; }
+}
+
+document.addEventListener('click', e => {
+  if (activeBtn && !e.target.closest('.info-btn')) closeTip();
+});
+
+// ─────────────────────────────────────────────
+//  PMI RATE TABLE
+// ─────────────────────────────────────────────
+function pmiRate(downPct) {
+  if (downPct >= 20) return 0;
+  if (downPct >= 15) return 0.35;
+  if (downPct >= 10) return 0.60;
+  if (downPct >= 5)  return 0.85;
+  return 1.25;
+}
+
+// ─────────────────────────────────────────────
+//  CORE CALCULATIONS
+// ─────────────────────────────────────────────
+function monthlyPayment(principal, annualRate, termMonths) {
+  if (principal <= 0) return 0;
+  if (annualRate === 0) return principal / termMonths;
+  const r = annualRate / 100 / 12;
+  const n = termMonths;
+  return principal * r * Math.pow(1+r, n) / (Math.pow(1+r, n) - 1);
+}
+
+function amortize(loanAmt, annualRate, termMo, homeVal, extraPmt, extraMode) {
+  if (loanAmt <= 0) return null;
+  const r         = annualRate / 100 / 12;
+  const basePmt   = monthlyPayment(loanAmt, annualRate, termMo);
+  const downPct   = ((homeVal - loanAmt) / homeVal) * 100;
+  const pmiAnnual = pmiRate(downPct) / 100;
+  const pmiBound  = homeVal * 0.80;
+
+  let bal = loanAmt;
+  let totalInt = 0, totalPMI = 0, pmiMo = 0;
+  const rows = [];
+
+  for (let m = 1; m <= termMo + 720 && bal > 0.005; m++) {
+    const startBal  = bal;
+    const interest  = bal * r;
+    let   principal = Math.max(0, basePmt - interest);
+    principal = Math.min(principal, bal);
+
+    const hasPMI = startBal > pmiBound;
+    const pmiAmt = hasPMI ? (loanAmt * pmiAnnual / 12) : 0;
+
+    const useExtra = extraMode === 'always' || (extraMode === 'pmi' && hasPMI);
+    const extra    = useExtra ? Math.min(extraPmt, bal - principal) : 0;
+
+    principal += extra;
+    bal = Math.max(0, startBal - principal);
+
+    totalInt += interest;
+    if (hasPMI) { totalPMI += pmiAmt; pmiMo++; }
+
+    rows.push({
+      month: m, startBal,
+      payment: interest + principal,
+      interest, principal,
+      endBal: bal,
+      pmi: pmiAmt, hasPMI,
+      equity: ((homeVal - bal) / homeVal) * 100
+    });
+
+    if (bal <= 0.005) break;
+  }
+
+  return { rows, totalInt, totalPMI, pmiMo, count: rows.length, basePmt };
+}
+
+// ─────────────────────────────────────────────
+//  APP STATE
+// ─────────────────────────────────────────────
+let dpMode       = 'dollar';
+let amortOpen    = false;
+let firstCalc    = true;
+let debounceTimer = null;
+let fadeTimer    = null;
+
+const OUTPUT_IDS = ['rPI', 'rPMI', 'rTax', 'rIns', 'rTotal', 'summaryContent'];
+
+function debouncedCalc() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(calculate, 400);
+}
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+function init() {
+  // Populate state dropdown
+  const sel = $('state');
+  Object.entries(STATES)
+    .sort((a,b) => a[1].n.localeCompare(b[1].n))
+    .forEach(([code, s]) => {
+      const o = document.createElement('option');
+      o.value = code; o.textContent = s.n;
+      sel.appendChild(o);
+    });
+  sel.value = 'VA';
+
+  // Formatted dollar inputs — format immediately, debounce calculation
+  $('homeValue').addEventListener('input', e => { formatDollarInput(e.target); debouncedCalc(); });
+  $('downPayment').addEventListener('input', e => {
+    if (dpMode === 'dollar') formatDollarInput(e.target);
+    debouncedCalc();
+  });
+
+  // Number inputs: debounce on typing; selects: immediate on change
+  $('rate').addEventListener('input', debouncedCalc);
+  $('extraAmt').addEventListener('input', e => { formatDollarInput(e.target); debouncedCalc(); });
+  $('term').addEventListener('change', calculate);
+  $('state').addEventListener('change', calculate);
+
+  calculate();
+}
+
+// ─────────────────────────────────────────────
+//  DOWN PAYMENT MODE TOGGLE
+// ─────────────────────────────────────────────
+function setDPMode(mode) {
+  if (mode === dpMode) return;
+
+  const hv  = parseDollar($('homeValue'));
+  const inp = $('downPayment');
+  const dp  = dpMode === 'dollar'
+    ? parseDollar(inp)
+    : parseFloat(inp.value) || 0;
+
+  if (mode === 'percent') {
+    const pct = hv > 0 ? +((dp / hv) * 100).toFixed(2) : 10;
+    inp.value = pct;
+    inp.inputMode = 'decimal';
+    inp.placeholder = '10';
+    inp.classList.add('pct-mode');
+    $('dpPfx').style.display = 'none';
+    $('dpSfx').style.display = '';
+    $('dpPill').classList.add('right');
+    $('btnPct').classList.add('active');
+    $('btnDollar').classList.remove('active');
+  } else {
+    const dollars = hv > 0 ? Math.round(hv * (dp / 100)) : 0;
+    inp.value = dollars ? dollars.toLocaleString('en-US') : '';
+    inp.inputMode = 'numeric';
+    inp.placeholder = '40,000';
+    inp.classList.remove('pct-mode');
+    $('dpPfx').style.display = '';
+    $('dpSfx').style.display = 'none';
+    $('dpPill').classList.remove('right');
+    $('btnDollar').classList.add('active');
+    $('btnPct').classList.remove('active');
+  }
+
+  dpMode = mode;
+  calculate();
+}
+
+// ─────────────────────────────────────────────
+//  EXTRA PAYMENT DROPDOWN
+// ─────────────────────────────────────────────
+function handleExtraMode() {
+  $('extraSlide').classList.toggle('open', $('extraMode').value !== 'none');
+  calculate();
+}
+
+// ─────────────────────────────────────────────
+//  MAIN CALCULATE
+// ─────────────────────────────────────────────
+function calculate() {
+  // Read all inputs immediately (before any async delay)
+  const homeVal   = parseDollar($('homeValue'));
+  const dpRaw     = dpMode === 'dollar'
+    ? parseDollar($('downPayment'))
+    : parseFloat($('downPayment').value) || 0;
+  const annRate   = parseFloat($('rate').value)    || 6.82;
+  const termMo    = parseInt($('term').value)       || 360;
+  const stateCode = $('state').value;
+  const extraMode = $('extraMode').value;
+  const extraPmt  = parseDollar($('extraAmt')) || 0;
+
+  const dp    = dpMode === 'percent' ? homeVal * (dpRaw / 100) : dpRaw;
+  const dpCap = Math.min(dp, homeVal);
+  const loan  = Math.max(0, homeVal - dpCap);
+  const dpPct = homeVal > 0 ? (dpCap / homeVal) * 100 : 0;
+
+  const basePmt   = monthlyPayment(loan, annRate, termMo);
+  const pmiAnnual = pmiRate(dpPct);
+  const monthPMI  = loan > 0 && pmiAnnual > 0 ? (loan * pmiAnnual / 100 / 12) : 0;
+
+  let monthTax = 0, monthIns = 0;
+  if (stateCode && STATES[stateCode]) {
+    const s = STATES[stateCode];
+    monthTax = (homeVal * s.tax / 100) / 12;
+    monthIns = (homeVal * s.ins / 100) / 12;
+  }
+
+  const total = basePmt + monthPMI + monthTax + monthIns;
+
+  // Run amortization immediately (pure computation, no DOM)
+  let base = null, extra = null;
+  if (loan > 0) {
+    base  = amortize(loan, annRate, termMo, homeVal, 0, 'none');
+    extra = (extraMode !== 'none' && extraPmt > 0)
+            ? amortize(loan, annRate, termMo, homeVal, extraPmt, extraMode)
+            : null;
+  }
+
+  // Render function (called after fade-out)
+  function doRender() {
+    $('rPI').textContent  = loan > 0  ? fmtD(basePmt)  : '—';
+    $('rPMI').textContent = loan > 0  ? fmtD(monthPMI) : '—';
+    $('rTax').textContent = stateCode ? fmtD(monthTax) : '—';
+    $('rIns').textContent = stateCode ? fmtD(monthIns) : '—';
+    $('rTotal').textContent = loan > 0 ? fmtD(total)   : '—';
+
+    renderChart(basePmt, monthPMI, monthTax, monthIns, total);
+
+    if (loan > 0 && base) {
+      renderSummary(base, extra, loan, dpPct);
+      if (amortOpen) renderTable(extra || base, homeVal);
+    } else {
+      $('summaryContent').innerHTML = '<div class="empty">Enter loan details above to see summary.</div>';
+      if (amortOpen) $('amortTbody').innerHTML = '';
+    }
+  }
+
+  // First call: render immediately with no animation
+  if (firstCalc) {
+    firstCalc = false;
+    doRender();
+    return;
+  }
+
+  // Subsequent calls: fade out → update → fade in
+  const els = OUTPUT_IDS.map(id => $(id));
+  clearTimeout(fadeTimer);
+  els.forEach(el => el.classList.add('fading'));
+
+  fadeTimer = setTimeout(() => {
+    doRender();
+    // Trigger reflow so the browser registers the class removal as a new transition
+    els.forEach(el => void el.offsetWidth);
+    els.forEach(el => el.classList.remove('fading'));
+    fadeTimer = null;
+  }, 200);
+}
+
+// ─────────────────────────────────────────────
+//  RENDER SUMMARY
+// ─────────────────────────────────────────────
+function renderSummary(base, extra, loan, dpPct) {
+  const el = $('summaryContent');
+
+  if (!extra) {
+    const noPMI = dpPct >= 20;
+    el.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="stat-lbl">Loan Amount</div>
+          <div class="stat-val">${fmtC(loan)}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-lbl">Payoff Date</div>
+          <div class="stat-val">${payoffDate(base.count)}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-lbl">Total Interest</div>
+          <div class="stat-val">${fmtC(base.totalInt)}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-lbl">Total Cost</div>
+          <div class="stat-val">${fmtC(loan + base.totalInt)}</div>
+        </div>
+        ${noPMI ? `
+        <div class="stat" style="grid-column:span 2">
+          <div class="stat-lbl">PMI</div>
+          <div><span class="badge">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <circle cx="6.5" cy="6.5" r="6" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M4 6.5l2 2 3.5-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            No PMI — Down payment ≥ 20%
+          </span></div>
+        </div>
+        ` : `
+        <div class="stat">
+          <div class="stat-lbl">PMI Duration</div>
+          <div class="stat-val">${fmtN(base.pmiMo / 12)} yrs</div>
+        </div>
+        <div class="stat">
+          <div class="stat-lbl">Total PMI Paid</div>
+          <div class="stat-val">${fmtC(base.totalPMI)}</div>
+        </div>
+        `}
+      </div>`;
+  } else {
+    const timeSaved = base.count - extra.count;
+    const intSaved  = base.totalInt - extra.totalInt;
+    const pmiSaved  = base.totalPMI - extra.totalPMI;
+    const rows = [
+      { l:'Payoff Date',    w: payoffDate(base.count),        e: payoffDate(extra.count)  },
+      { l:'Months',         w: `${base.count} mo`,            e: `${extra.count} mo`      },
+      { l:'Time Saved',     w: '—',                           e: timeSaved > 0 ? `${timeSaved} mo (${fmtN(timeSaved/12)} yrs)` : 'None' },
+      { l:'Total Interest', w: fmtC(base.totalInt),           e: fmtC(extra.totalInt)     },
+      { l:'Interest Saved', w: '—',                           e: intSaved > 0 ? fmtC(intSaved) : 'None' },
+      ...(base.pmiMo > 0 ? [
+        { l:'PMI Duration', w: `${fmtN(base.pmiMo/12)} yrs`, e: `${fmtN(extra.pmiMo/12)} yrs` },
+        { l:'Total PMI',    w: fmtC(base.totalPMI),           e: fmtC(extra.totalPMI)     },
+        { l:'PMI Savings',  w: '—',                           e: pmiSaved > 0 ? fmtC(pmiSaved) : 'None' },
+      ] : []),
+    ];
+
+    el.innerHTML = `
+      <div class="cmp-header">
+        <span></span>
+        <span>Without Extra</span>
+        <span>With Extra</span>
+      </div>
+      ${rows.map(r => `
+        <div class="cmp-row">
+          <span class="cl">${r.l}</span>
+          <span class="cv">${r.w}</span>
+          <span class="cv">${r.e}</span>
+        </div>`).join('')}`;
+  }
+}
+
+// ─────────────────────────────────────────────
+//  AMORTIZATION TABLE
+// ─────────────────────────────────────────────
+function toggleAmort() {
+  amortOpen = !amortOpen;
+  $('chevron').classList.toggle('open', amortOpen);
+  $('amortBody').classList.toggle('open', amortOpen);
+
+  if (amortOpen) {
+    const homeVal  = parseDollar($('homeValue'));
+    const dpRaw    = dpMode === 'dollar' ? parseDollar($('downPayment')) : parseFloat($('downPayment').value) || 0;
+    const annRate  = parseFloat($('rate').value) || 0;
+    const termMo   = parseInt($('term').value)   || 360;
+    const extraMode = $('extraMode').value;
+    const extraPmt  = parseDollar($('extraAmt')) || 0;
+    const dp   = dpMode === 'percent' ? homeVal * (dpRaw / 100) : dpRaw;
+    const loan = Math.max(0, homeVal - Math.min(dp, homeVal));
+
+    if (loan > 0) {
+      const result = (extraMode !== 'none' && extraPmt > 0)
+        ? amortize(loan, annRate, termMo, homeVal, extraPmt, extraMode)
+        : amortize(loan, annRate, termMo, homeVal, 0, 'none');
+      renderTable(result, homeVal);
+    }
+  }
+}
+
+function renderTable(result, homeVal) {
+  const tbody = $('amortTbody');
+  const frag  = document.createDocumentFragment();
+
+  result.rows.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row.hasPMI) tr.classList.add('pmi-row');
+    const equityDollars = homeVal - row.endBal;
+    tr.innerHTML =
+      `<td>${row.month}</td>` +
+      `<td>${fmtD(row.startBal)}</td>` +
+      `<td>${fmtD(row.payment)}</td>` +
+      `<td>${fmtD(row.interest)}</td>` +
+      `<td>${fmtD(row.principal)}</td>` +
+      `<td>${fmtD(row.endBal)}</td>` +
+      `<td class="${row.hasPMI ? 'pmi-cell' : ''}">${row.pmi > 0 ? fmtD(row.pmi) : '—'}</td>` +
+      `<td>${fmtN(row.equity)}%</td>` +
+      `<td>${fmtC(equityDollars)}</td>`;
+    frag.appendChild(tr);
+  });
+
+  tbody.innerHTML = '';
+  tbody.appendChild(frag);
+}
+
+// ─────────────────────────────────────────────
+//  DONUT CHART
+// ─────────────────────────────────────────────
+const CHART_COLORS = {
+  pi:  '#007aff',
+  pmi: '#ff3b30',
+  tax: '#5856d6',
+  ins: '#34c759',
+};
+
+function renderChart(pi, pmi, tax, ins, total) {
+  const section = $('chartSection');
+
+  if (total <= 0 || pi <= 0) {
+    section.classList.remove('visible');
+    return;
+  }
+  section.classList.add('visible');
+
+  const segments = [
+    { val: pi,  color: CHART_COLORS.pi,  label: 'Principal & Interest' },
+    { val: pmi, color: CHART_COLORS.pmi, label: 'PMI' },
+    { val: tax, color: CHART_COLORS.tax, label: 'Property Tax' },
+    { val: ins, color: CHART_COLORS.ins, label: 'Homeowners Insurance' },
+  ].filter(s => s.val > 0);
+
+  // Build SVG donut segments
+  const r     = 36;
+  const cx    = 50; const cy = 50;
+  const circ  = 2 * Math.PI * r;
+  const gap   = 0.012 * circ; // tiny gap between segments in units of arc length
+  let startDeg = -90;
+  let svgHTML  = '';
+
+  segments.forEach(s => {
+    const pct    = s.val / total;
+    const segLen = Math.max(0, pct * circ - (segments.length > 1 ? gap : 0));
+    svgHTML +=
+      `<circle cx="${cx}" cy="${cy}" r="${r}"` +
+      ` fill="none" stroke="${s.color}" stroke-width="14"` +
+      ` stroke-dasharray="${segLen.toFixed(3)} ${(circ - segLen).toFixed(3)}"` +
+      ` transform="rotate(${startDeg.toFixed(3)},${cx},${cy})"/>`;
+    startDeg += pct * 360;
+  });
+
+  // Center hole
+  svgHTML += `<circle cx="${cx}" cy="${cy}" r="29" fill="white"/>`;
+  $('donutSvg').innerHTML = svgHTML;
+
+  // Center label
+  $('donutTotal').textContent = fmtC(total);
+
+  // Legend
+  const legendHTML = segments.map(s =>
+    `<div class="legend-item">` +
+    `<span class="legend-dot" style="background:${s.color}"></span>` +
+    `<span class="legend-label">${s.label}</span>` +
+    `<span class="legend-val">${fmtD(s.val)}</span>` +
+    `</div>`
+  ).join('');
+  $('chartLegend').innerHTML = legendHTML;
+}
+
+// ─────────────────────────────────────────────
+//  BOOT
+// ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
