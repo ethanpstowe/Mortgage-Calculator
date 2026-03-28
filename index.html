@@ -205,6 +205,11 @@
     /* ── Down payment row ── */
     .dp-row { display: flex; gap: 10px; align-items: flex-end; }
     .dp-row .input-wrap { flex: 1; }
+    .dp-equiv {
+      font-size: 12px; color: var(--text3); margin-top: 5px;
+      min-height: 16px; transition: opacity 0.15s ease;
+    }
+    .dp-equiv:empty { opacity: 0; }
 
     /* ── Segmented control with sliding pill ── */
     .seg {
@@ -553,6 +558,7 @@
           <button id="btnPct"    onclick="setDPMode('percent')">%</button>
         </div>
       </div>
+      <p class="dp-equiv" id="dpEquiv"></p>
     </div>
 
     <div class="two-col">
@@ -1012,9 +1018,10 @@ function init() {
   sel.value = 'VA';
 
   // Formatted dollar inputs — format immediately, debounce calculation
-  $('homeValue').addEventListener('input', e => { formatDollarInput(e.target); debouncedCalc(); });
+  $('homeValue').addEventListener('input', e => { formatDollarInput(e.target); updateDPHint(); debouncedCalc(); });
   $('downPayment').addEventListener('input', e => {
     if (dpMode === 'dollar') formatDollarInput(e.target);
+    updateDPHint();
     debouncedCalc();
   });
 
@@ -1064,7 +1071,17 @@ function setDPMode(mode) {
   }
 
   dpMode = mode;
+  updateDPHint();
   calculate();
+}
+
+function updateDPHint() {
+  const el = $('dpEquiv');
+  if (dpMode !== 'percent') { el.textContent = ''; return; }
+  const hv  = parseDollar($('homeValue'));
+  const pct = parseFloat($('downPayment').value) || 0;
+  if (!hv || !pct) { el.textContent = ''; return; }
+  el.textContent = '= ' + fmtC(Math.round(hv * pct / 100));
 }
 
 // ─────────────────────────────────────────────
