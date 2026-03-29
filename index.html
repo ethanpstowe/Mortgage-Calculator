@@ -316,6 +316,31 @@
     }
     .custom-range-row .field { flex: 1; margin: 0; }
 
+    /* ── Extra savings banner (inside Advanced Options card) ── */
+    .savings-banner {
+      overflow: hidden; max-height: 0; opacity: 0; margin-top: 0;
+      transition: max-height .4s cubic-bezier(.4,0,.2,1), opacity .3s ease, margin-top .35s ease;
+    }
+    .savings-banner.visible { max-height: 120px; opacity: 1; margin-top: 16px; }
+    .savings-banner-inner {
+      background: rgba(48,209,88,.11);
+      border: 1px solid rgba(48,209,88,.28);
+      border-radius: var(--r-sm);
+      padding: 12px 14px;
+      display: flex; align-items: flex-start; gap: 9px;
+      font-size: 13.5px; font-weight: 500;
+      color: #1e7a3a; line-height: 1.5;
+    }
+    .savings-banner-inner svg { flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Savings nudge below total ── */
+    .savings-nudge {
+      overflow: hidden; max-height: 0; opacity: 0; margin-top: 0;
+      text-align: center; font-size: 13px; font-weight: 500; color: var(--green);
+      transition: max-height .35s cubic-bezier(.4,0,.2,1), opacity .3s ease, margin-top .3s ease;
+    }
+    .savings-nudge.visible { max-height: 28px; opacity: 1; margin-top: 8px; }
+
     /* ── Monthly breakdown ── */
     .breakdown { display: flex; flex-direction: column; }
 
@@ -748,6 +773,17 @@
         </div>
       </div>
     </div>
+
+    <!-- savings banner lives inside the card so flex-gap doesn't affect it -->
+    <div class="savings-banner" id="savingsBanner">
+      <div class="savings-banner-inner">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+          <circle cx="7.5" cy="7.5" r="6.5" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M4.5 7.5l2.2 2.2 3.8-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span id="savingsBannerText"></span>
+      </div>
+    </div>
   </div>
 
   <!-- ── Monthly Breakdown ── -->
@@ -797,6 +833,7 @@
       <span class="tl">Total Monthly</span>
       <span class="tv output" id="rTotal">—</span>
     </div>
+    <div class="savings-nudge output" id="savingsNudge"></div>
     <div class="share-row">
       <button class="btn-share" onclick="shareResults()">
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1141,7 +1178,7 @@ let firstCalc    = true;
 let debounceTimer = null;
 let fadeTimer    = null;
 
-const OUTPUT_IDS = ['rPI', 'rPMI', 'rTax', 'rIns', 'rTotal', 'summaryContent'];
+const OUTPUT_IDS = ['rPI', 'rPMI', 'rTax', 'rIns', 'rTotal', 'savingsNudge', 'summaryContent'];
 
 function debouncedCalc() {
   clearTimeout(debounceTimer);
@@ -1449,6 +1486,7 @@ function calculate() {
     $('rTotal').textContent = loan > 0 ? fmtD(total)   : '—';
 
     renderChart(basePmt, monthPMI, monthTax, monthIns, total);
+    renderSavingsHints(base, extra);
 
     if (loan > 0 && base) {
       renderSummary(base, extra, loan, dpPct);
@@ -1478,6 +1516,41 @@ function calculate() {
     els.forEach(el => el.classList.remove('fading'));
     fadeTimer = null;
   }, 200);
+}
+
+// ─────────────────────────────────────────────
+//  RENDER SAVINGS HINTS
+// ─────────────────────────────────────────────
+function renderSavingsHints(base, extra) {
+  const banner = $('savingsBanner');
+  const nudge  = $('savingsNudge');
+
+  if (!base || !extra) {
+    banner.classList.remove('visible');
+    nudge.classList.remove('visible');
+    return;
+  }
+
+  const intSaved = base.totalInt - extra.totalInt;
+  const moSaved  = base.count - extra.count;
+
+  if (intSaved <= 0) {
+    banner.classList.remove('visible');
+    nudge.classList.remove('visible');
+    return;
+  }
+
+  const timePart = moSaved > 0
+    ? ` and pay off your loan ${moSaved} month${moSaved !== 1 ? 's' : ''} early`
+    : '';
+
+  $('savingsBannerText').textContent =
+    `With extra payments you will save ${fmtC(intSaved)} in interest${timePart}.`;
+  nudge.textContent =
+    `Extra payments will save you ${fmtC(intSaved)} over the life of your loan.`;
+
+  banner.classList.add('visible');
+  nudge.classList.add('visible');
 }
 
 // ─────────────────────────────────────────────
