@@ -313,12 +313,15 @@
     /* ── County refinement ── */
     .county-link {
       display: inline-flex; align-items: center; gap: 5px;
-      font-size: 12px; color: var(--text3); cursor: pointer;
+      font-size: 12px; color: var(--text2); cursor: pointer;
       background: none; border: none; padding: 0; margin-top: 8px;
-      text-decoration: underline; text-decoration-style: dotted;
-      text-underline-offset: 2px; transition: color .15s;
+      text-decoration: none; transition: color .15s;
     }
-    .county-link:hover { color: var(--text2); }
+    .county-link:hover { color: var(--text1); }
+    .county-link .chevron {
+      font-size: 10px; transition: transform .2s ease; line-height: 1;
+    }
+    .county-link.open .chevron { transform: rotate(180deg); }
     .county-slide {
       overflow: hidden; max-height: 0; opacity: 0; margin-top: 0;
       transition: max-height .35s cubic-bezier(.4,0,.2,1), opacity .28s ease, margin-top .3s ease;
@@ -784,6 +787,7 @@
           <circle cx="6" cy="4.5" r="1.2" stroke="currentColor" stroke-width="1.1"/>
         </svg>
         Refine with your county for a more accurate tax estimate
+        <span class="chevron" aria-hidden="true">▾</span>
       </button>
       <div class="county-slide" id="countySlide">
         <div class="county-search-wrap">
@@ -1597,11 +1601,13 @@ let countyName = '';
 
 function toggleCountySearch() {
   const slide = $('countySlide');
+  const btn = $('countyLink');
   const isOpen = slide.classList.contains('open');
   if (isOpen) {
     closeCountySearch();
   } else {
     slide.classList.add('open');
+    btn.classList.add('open');
     setTimeout(() => $('countyInput').focus(), 320);
     handleCountySearch();
   }
@@ -1609,6 +1615,7 @@ function toggleCountySearch() {
 
 function closeCountySearch() {
   $('countySlide').classList.remove('open');
+  $('countyLink').classList.remove('open');
   $('countyInput').value = '';
   $('countyDropdown').innerHTML = '';
   $('countyDropdown').classList.remove('open');
