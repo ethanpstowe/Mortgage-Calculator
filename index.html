@@ -312,16 +312,24 @@
 
     /* ── County refinement ── */
     .county-link {
-      display: inline-flex; align-items: center; gap: 5px;
-      font-size: 12px; color: var(--text2); cursor: pointer;
-      background: none; border: none; padding: 0; margin-top: 8px;
-      text-decoration: none; transition: color .15s;
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; box-sizing: border-box;
+      font-size: 13px; color: var(--text2); cursor: pointer;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: 9px 12px; margin-top: 10px;
+      text-decoration: none; text-align: left;
+      transition: background .15s, border-color .15s;
     }
-    .county-link:hover { color: var(--text1); }
-    .county-link .chevron {
-      font-size: 10px; transition: transform .2s ease; line-height: 1;
+    .county-link:hover {
+      background: rgba(0,122,255,.05); border-color: rgba(0,122,255,.25);
     }
-    .county-link.open .chevron { transform: rotate(180deg); }
+    .county-link .pin-icon { color: var(--blue); flex-shrink: 0; }
+    .county-link .county-label { flex: 1; }
+    .county-link .county-chevron {
+      color: var(--text3); flex-shrink: 0;
+      transition: transform .25s cubic-bezier(.4,0,.2,1);
+    }
+    .county-link.open .county-chevron { transform: rotate(180deg); }
     .county-slide {
       overflow: hidden; max-height: 0; opacity: 0; margin-top: 0;
       transition: max-height .35s cubic-bezier(.4,0,.2,1), opacity .28s ease, margin-top .3s ease;
@@ -782,12 +790,14 @@
       </select>
       <p class="field-hint">Your state affects your property tax rate, which is added to your monthly payment</p>
       <button class="county-link" id="countyLink" onclick="toggleCountySearch()" style="display:none">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+        <svg class="pin-icon" width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
           <path d="M6 1C4.067 1 2.5 2.567 2.5 4.5c0 2.625 3.5 6.5 3.5 6.5s3.5-3.875 3.5-6.5C9.5 2.567 7.933 1 6 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
           <circle cx="6" cy="4.5" r="1.2" stroke="currentColor" stroke-width="1.1"/>
         </svg>
-        Refine with your county for a more accurate tax estimate
-        <span class="chevron" aria-hidden="true">▾</span>
+        <span class="county-label">Refine with your county for a more accurate tax estimate</span>
+        <svg class="county-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </button>
       <div class="county-slide" id="countySlide">
         <div class="county-search-wrap">
