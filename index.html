@@ -1631,11 +1631,14 @@ function handleCountySearch() {
   }
 
   dropdown.innerHTML = matches.slice(0, 50).map(([name, rate]) =>
-    `<div class="county-option" onclick="selectCounty(${JSON.stringify(name)},${rate})">
+    `<div class="county-option" data-name="${name.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" data-rate="${rate}">
        <span>${name}</span>
        <span class="county-option-rate">${rate.toFixed(2)}%</span>
      </div>`
   ).join('');
+  dropdown.querySelectorAll('.county-option').forEach(el => {
+    el.addEventListener('click', () => selectCounty(el.dataset.name, parseFloat(el.dataset.rate)));
+  });
   dropdown.classList.add('open');
 }
 
