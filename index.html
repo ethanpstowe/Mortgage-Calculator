@@ -733,13 +733,13 @@
             <div class="custom-range-row">
               <div class="field">
                 <label class="lbl" for="customFrom">From</label>
-                <select id="customFrom" onchange="handleCustomRange()">
+                <select id="customFrom" onchange="handleCustomRange('from')">
                   <option value="0">Loan Inception</option>
                 </select>
               </div>
               <div class="field">
                 <label class="lbl" for="customTo">To</label>
-                <select id="customTo" onchange="handleCustomRange()">
+                <select id="customTo" onchange="handleCustomRange('to')">
                   <option value="999">Loan Payoff</option>
                 </select>
               </div>
@@ -1371,30 +1371,22 @@ function handleExtraMode() {
 // ─────────────────────────────────────────────
 //  CUSTOM RANGE DROPDOWNS
 // ─────────────────────────────────────────────
-function handleCustomRange() {
+function handleCustomRange(changed) {
   const fromVal = parseInt($('customFrom').value);
   const toRaw   = $('customTo').value;
   const toVal   = toRaw === '999' ? 999 : parseInt(toRaw);
 
-  // Disable To options that are <= the From year
-  Array.from($('customTo').options).forEach(opt => {
-    if (opt.value === '999') { opt.disabled = false; return; }
-    opt.disabled = parseInt(opt.value) <= fromVal;
-  });
-
-  // Disable From options that are >= the To year (when To is not "Loan Payoff")
-  Array.from($('customFrom').options).forEach(opt => {
-    if (opt.value === '0') { opt.disabled = false; return; }
-    opt.disabled = toVal !== 999 && parseInt(opt.value) >= toVal;
-  });
-
-  // If current To selection is now invalid, bump to Loan Payoff
-  if ($('customTo').options[$('customTo').selectedIndex].disabled) {
-    $('customTo').value = '999';
-  }
-  // If current From selection is now invalid, reset to Loan Inception
-  if ($('customFrom').options[$('customFrom').selectedIndex].disabled) {
-    $('customFrom').value = '0';
+  if (changed === 'from') {
+    // If From >= To, advance To to From+1, or Loan Payoff if From is Year 29
+    if (toVal !== 999 && fromVal >= toVal) {
+      const newTo = fromVal + 1;
+      $('customTo').value = newTo > 29 ? '999' : String(newTo);
+    }
+  } else {
+    // If To <= From, retreat From to To-1, or Loan Inception if To is Year 1
+    if (toVal !== 999 && fromVal >= toVal) {
+      $('customFrom').value = String(Math.max(0, toVal - 1));
+    }
   }
 
   calculate();
