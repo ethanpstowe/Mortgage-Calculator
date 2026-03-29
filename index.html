@@ -337,9 +337,10 @@
     .savings-nudge {
       overflow: hidden; max-height: 0; opacity: 0; margin-top: 0;
       text-align: center; font-size: 13px; font-weight: 500; color: var(--green);
-      transition: max-height .35s cubic-bezier(.4,0,.2,1), opacity .3s ease, margin-top .3s ease;
+      line-height: 1.5; padding: 0 4px;
+      transition: max-height .35s cubic-bezier(.4,0,.2,1), opacity .3s ease, margin-top .3s ease, padding-bottom .3s ease;
     }
-    .savings-nudge.visible { max-height: 28px; opacity: 1; margin-top: 8px; }
+    .savings-nudge.visible { max-height: 80px; opacity: 1; margin-top: 8px; padding-bottom: 4px; }
 
     /* ── Monthly breakdown ── */
     .breakdown { display: flex; flex-direction: column; }
