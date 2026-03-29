@@ -751,7 +751,7 @@
             <label class="lbl" for="extraAmt">Extra Monthly Payment</label>
             <div class="input-wrap">
               <span class="pfx">$</span>
-              <input type="text" inputmode="numeric" id="extraAmt" placeholder="200" value="200">
+              <input type="text" inputmode="numeric" id="extraAmt" placeholder="200">
             </div>
           </div>
           <div id="customRangeFields" style="display:none">
@@ -1399,6 +1399,7 @@ function toggleAdvanced() {
 // ─────────────────────────────────────────────
 function handleExtraMode() {
   const mode = $('extraMode').value;
+  if (mode !== 'none') $('extraAmt').value = '';
   $('extraSlide').classList.toggle('open', mode !== 'none');
   $('pmiHint').classList.toggle('visible', mode === 'pmi');
   $('customRangeFields').style.display = mode === 'custom' ? '' : 'none';
@@ -1545,7 +1546,7 @@ function renderSavingsHints(base, extra) {
     : '';
 
   $('savingsBannerText').textContent =
-    `With extra payments you will save ${fmtC(intSaved)} in interest${timePart}.`;
+    `You will save ${fmtC(intSaved)} in interest over the life of the loan${timePart}. See the comparison table below for full details.`;
   nudge.textContent =
     `Extra payments will save you ${fmtC(intSaved)} over the life of your loan.`;
 
