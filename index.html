@@ -490,6 +490,40 @@
       .chart-legend  { width: 100%; }
     }
 
+    /* ── Share / Reset buttons ── */
+    .card-title-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 0;
+    }
+    .btn-reset {
+      font-size: 12px; font-weight: 500; color: var(--text3);
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 12px; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      line-height: 1.4;
+    }
+    .btn-reset:hover { background: var(--border); color: var(--text2); }
+    .share-row {
+      margin-top: 14px; display: flex; justify-content: center;
+    }
+    .btn-share {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 14px; font-weight: 600; color: var(--blue);
+      background: var(--blue-glow); border: 1px solid rgba(0,122,255,.2);
+      border-radius: 20px; padding: 9px 22px; cursor: pointer;
+      transition: background 0.15s, transform 0.12s;
+    }
+    .btn-share:hover { background: rgba(0,122,255,.18); }
+    .btn-share:active { transform: scale(0.97); }
+    .btn-share svg { flex-shrink: 0; }
+    .share-confirm {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px; font-size: 13px; font-weight: 500; color: var(--green);
+      margin-top: 8px; opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .share-confirm.visible { opacity: 1; }
+
     /* ── Educational section ── */
     .edu-section {
       margin-top: 40px;
@@ -543,7 +577,10 @@
 
   <!-- ── Loan Details ── -->
   <div class="card">
-    <div class="card-title">Loan Details</div>
+    <div class="card-title-row">
+      <div class="card-title" style="margin-bottom:0">Loan Details</div>
+      <button class="btn-reset" onclick="resetCalc()">Reset</button>
+    </div>
 
     <div class="field">
       <label class="lbl" for="homeValue">Home Value</label>
@@ -676,6 +713,21 @@
     <div class="b-total">
       <span class="tl">Total Monthly</span>
       <span class="tv output" id="rTotal">—</span>
+    </div>
+    <div class="share-row">
+      <button class="btn-share" onclick="shareResults()">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 1l4 4-4 4M14 5H5.5A3.5 3.5 0 002 8.5V14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Share Results
+      </button>
+    </div>
+    <div class="share-confirm" id="shareConfirm">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.4"/>
+        <path d="M4.5 7l2 2 3-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Copied to clipboard!
     </div>
   </div>
 
@@ -1009,6 +1061,75 @@ const OUTPUT_IDS = ['rPI', 'rPMI', 'rTax', 'rIns', 'rTotal', 'summaryContent'];
 function debouncedCalc() {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(calculate, 400);
+}
+
+// ─────────────────────────────────────────────
+//  SHARE RESULTS
+// ─────────────────────────────────────────────
+function shareResults() {
+  const hv      = $('homeValue').value || '—';
+  const dp      = $('downPayment').value || '—';
+  const dpSfx   = dpMode === 'percent' ? '%' : '';
+  const dpPfx   = dpMode === 'dollar'  ? '$' : '';
+  const rate    = $('rate').value || '—';
+  const term    = $('term').value;
+  const state   = $('state').value || '—';
+  const pi      = $('rPI').textContent;
+  const pmi     = $('rPMI').textContent;
+  const tax     = $('rTax').textContent;
+  const ins     = $('rIns').textContent;
+  const total   = $('rTotal').textContent;
+
+  // Pull summary stats from rendered DOM text
+  const statEls = document.querySelectorAll('#summaryContent .stat');
+  const stats = [];
+  statEls.forEach(el => {
+    const lbl = el.querySelector('.stat-lbl');
+    const val = el.querySelector('.stat-val');
+    if (lbl && val) stats.push(`${lbl.textContent.trim()}: ${val.textContent.trim()}`);
+  });
+
+  const lines = [
+    '🏠 Mortgage Estimate — MortgageWise',
+    '─────────────────────────',
+    `Home Value:       $${hv}`,
+    `Down Payment:     ${dpPfx}${dp}${dpSfx}`,
+    `Interest Rate:    ${rate}%`,
+    `Loan Term:        ${term} years`,
+    `State:            ${state}`,
+    '',
+    '📋 Monthly Payment Breakdown',
+    `Principal & Interest: ${pi}`,
+    `PMI:                  ${pmi}`,
+    `Property Tax:         ${tax}`,
+    `Home Insurance:       ${ins}`,
+    `Total Monthly:        ${total}`,
+    '',
+    ...(stats.length ? ['📊 Loan Summary', ...stats, ''] : []),
+    'Calculated at mortgagewise.app',
+  ];
+
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const el = $('shareConfirm');
+    el.classList.add('visible');
+    setTimeout(() => el.classList.remove('visible'), 2000);
+  });
+}
+
+// ─────────────────────────────────────────────
+//  RESET
+// ─────────────────────────────────────────────
+function resetCalc() {
+  $('homeValue').value   = '400,000';
+  $('rate').value        = '6.82';
+  $('term').value        = '30';
+  $('state').value       = 'VA';
+  $('extraAmt').value    = '';
+  $('extraMode').value   = 'none';
+  setDPMode('percent');
+  $('downPayment').value = '20';
+  updateDPHint();
+  calculate();
 }
 
 // ─────────────────────────────────────────────
