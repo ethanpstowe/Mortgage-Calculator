@@ -266,9 +266,55 @@
     /* ── Collapsible extra amount ── */
     .slide {
       overflow: hidden; max-height: 0;
-      opacity: 0; transition: max-height .3s ease, opacity .25s ease, margin-top .3s ease;
+      opacity: 0; transition: max-height .35s cubic-bezier(.4,0,.2,1), opacity .28s ease, margin-top .3s ease;
     }
-    .slide.open { max-height: 100px; opacity: 1; margin-top: 14px; }
+    .slide.open { max-height: 500px; opacity: 1; margin-top: 14px; }
+
+    /* ── Advanced Options card ── */
+    .adv-trigger {
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; user-select: none; padding: 2px 0;
+    }
+    .adv-trigger-text { display: flex; flex-direction: column; gap: 3px; }
+    .adv-trigger .card-title { margin: 0; }
+    .adv-hint {
+      font-size: 13px; color: var(--text3);
+      transition: opacity .2s ease, max-height .2s ease;
+      max-height: 20px; overflow: hidden;
+    }
+    .adv-hint.hidden { opacity: 0; max-height: 0; }
+    .adv-body {
+      overflow: hidden; max-height: 0;
+      transition: max-height .45s cubic-bezier(.4,0,.2,1), opacity .35s ease;
+      opacity: 0;
+    }
+    .adv-body.open { max-height: 800px; opacity: 1; }
+
+    /* ── Subsections inside Advanced Options ── */
+    .subsec {
+      margin-top: 18px; padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+    .subsec-title {
+      font-size: 15px; font-weight: 600; color: var(--text);
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    /* ── Option hint (e.g. PMI subtitle) ── */
+    .opt-hint {
+      font-size: 12px; color: var(--text3);
+      margin-top: 6px;
+      transition: opacity .2s ease, max-height .2s ease;
+      overflow: hidden; max-height: 0; opacity: 0;
+    }
+    .opt-hint.visible { max-height: 20px; opacity: 1; }
+
+    /* ── Custom range row ── */
+    .custom-range-row {
+      display: flex; gap: 12px; margin-top: 12px;
+    }
+    .custom-range-row .field { flex: 1; margin: 0; }
 
     /* ── Monthly breakdown ── */
     .breakdown { display: flex; flex-direction: column; }
@@ -645,25 +691,60 @@
     </div>
   </div>
 
-  <!-- ── Extra Payments ── -->
+  <!-- ── Advanced Options ── -->
   <div class="card">
-    <div class="card-title">
-      Extra Principal Payments
-      <button class="info-btn" onclick="showTip(this,'extra')" aria-label="About extra principal payments">i</button>
+    <div class="adv-trigger" onclick="toggleAdvanced()" aria-expanded="false" id="advTrigger">
+      <div class="adv-trigger-text">
+        <div class="card-title" style="margin-bottom:0">Advanced Options</div>
+        <div class="adv-hint" id="advHint">Extra payments, HOA fees, and more</div>
+      </div>
+      <div class="chevron" id="advChevron">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
     </div>
-    <div class="field" style="margin-bottom:0">
-      <select id="extraMode" onchange="handleExtraMode()">
-        <option value="none">None</option>
-        <option value="pmi">During PMI Only</option>
-        <option value="always">Entire Loan Duration</option>
-      </select>
-    </div>
-    <div class="slide" id="extraSlide">
-      <div class="field" style="margin-top:0">
-        <label class="lbl" for="extraAmt">Extra Monthly Payment</label>
-        <div class="input-wrap">
-          <span class="pfx">$</span>
-          <input type="text" inputmode="numeric" id="extraAmt" placeholder="200" value="200">
+
+    <div class="adv-body" id="advBody">
+      <!-- Extra Principal Payments subsection -->
+      <div class="subsec">
+        <div class="subsec-title">
+          Extra Principal Payments
+          <button class="info-btn" onclick="showTip(this,'extra')" aria-label="About extra principal payments">i</button>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <select id="extraMode" onchange="handleExtraMode()">
+            <option value="none">None</option>
+            <option value="pmi">During PMI Period Only</option>
+            <option value="always">Entire Loan Duration</option>
+            <option value="custom">Custom Range</option>
+          </select>
+          <div class="opt-hint" id="pmiHint">Until you reach 20% equity</div>
+        </div>
+        <div class="slide" id="extraSlide">
+          <div class="field" style="margin-top:0">
+            <label class="lbl" for="extraAmt">Extra Monthly Payment</label>
+            <div class="input-wrap">
+              <span class="pfx">$</span>
+              <input type="text" inputmode="numeric" id="extraAmt" placeholder="200" value="200">
+            </div>
+          </div>
+          <div id="customRangeFields" style="display:none">
+            <div class="custom-range-row">
+              <div class="field">
+                <label class="lbl" for="customFrom">From</label>
+                <select id="customFrom" onchange="handleCustomRange()">
+                  <option value="0">Loan Inception</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="lbl" for="customTo">To</label>
+                <select id="customTo" onchange="handleCustomRange()">
+                  <option value="999">Loan Payoff</option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1004,7 +1085,7 @@ function monthlyPayment(principal, annualRate, termMonths) {
   return principal * r * Math.pow(1+r, n) / (Math.pow(1+r, n) - 1);
 }
 
-function amortize(loanAmt, annualRate, termMo, homeVal, extraPmt, extraMode) {
+function amortize(loanAmt, annualRate, termMo, homeVal, extraPmt, extraMode, fromMonth = 1, toMonth = Infinity) {
   if (loanAmt <= 0) return null;
   const r         = annualRate / 100 / 12;
   const basePmt   = monthlyPayment(loanAmt, annualRate, termMo);
@@ -1025,7 +1106,9 @@ function amortize(loanAmt, annualRate, termMo, homeVal, extraPmt, extraMode) {
     const hasPMI = startBal > pmiBound;
     const pmiAmt = hasPMI ? (loanAmt * pmiAnnual / 12) : 0;
 
-    const useExtra = extraMode === 'always' || (extraMode === 'pmi' && hasPMI);
+    const useExtra = extraMode === 'always'
+      || (extraMode === 'pmi' && hasPMI)
+      || (extraMode === 'custom' && m >= fromMonth && m <= toMonth);
     const extra    = useExtra ? Math.min(extraPmt, bal - principal) : 0;
 
     principal += extra;
@@ -1128,6 +1211,11 @@ function resetCalc() {
   $('state').value       = 'VA';
   $('extraAmt').value    = '';
   $('extraMode').value   = 'none';
+  $('customFrom').value  = '0';
+  $('customTo').value    = '999';
+  $('extraSlide').classList.remove('open');
+  $('pmiHint').classList.remove('visible');
+  $('customRangeFields').style.display = 'none';
   setDPMode('percent');
   $('downPayment').value = '20';
   updateDPHint();
@@ -1148,6 +1236,20 @@ function init() {
       sel.appendChild(o);
     });
   sel.value = 'VA';
+
+  // Populate custom range dropdowns (Year 1–29)
+  const fromSel = $('customFrom');
+  const toSel   = $('customTo');
+  const payoffOpt = toSel.querySelector('option[value="999"]');
+  for (let y = 1; y <= 29; y++) {
+    const fo = document.createElement('option');
+    fo.value = y; fo.textContent = `Year ${y}`;
+    fromSel.appendChild(fo);
+
+    const to = document.createElement('option');
+    to.value = y; to.textContent = `Year ${y}`;
+    toSel.insertBefore(to, payoffOpt);
+  }
 
   // Formatted dollar inputs — format immediately, debounce calculation
   $('homeValue').addEventListener('input', e => {
@@ -1244,10 +1346,57 @@ function updateDPHint() {
 }
 
 // ─────────────────────────────────────────────
+//  ADVANCED OPTIONS TOGGLE
+// ─────────────────────────────────────────────
+let advOpen = false;
+function toggleAdvanced() {
+  advOpen = !advOpen;
+  $('advChevron').classList.toggle('open', advOpen);
+  $('advBody').classList.toggle('open', advOpen);
+  $('advHint').classList.toggle('hidden', advOpen);
+  $('advTrigger').setAttribute('aria-expanded', advOpen);
+}
+
+// ─────────────────────────────────────────────
 //  EXTRA PAYMENT DROPDOWN
 // ─────────────────────────────────────────────
 function handleExtraMode() {
-  $('extraSlide').classList.toggle('open', $('extraMode').value !== 'none');
+  const mode = $('extraMode').value;
+  $('extraSlide').classList.toggle('open', mode !== 'none');
+  $('pmiHint').classList.toggle('visible', mode === 'pmi');
+  $('customRangeFields').style.display = mode === 'custom' ? '' : 'none';
+  calculate();
+}
+
+// ─────────────────────────────────────────────
+//  CUSTOM RANGE DROPDOWNS
+// ─────────────────────────────────────────────
+function handleCustomRange() {
+  const fromVal = parseInt($('customFrom').value);
+  const toRaw   = $('customTo').value;
+  const toVal   = toRaw === '999' ? 999 : parseInt(toRaw);
+
+  // Disable To options that are <= the From year
+  Array.from($('customTo').options).forEach(opt => {
+    if (opt.value === '999') { opt.disabled = false; return; }
+    opt.disabled = parseInt(opt.value) <= fromVal;
+  });
+
+  // Disable From options that are >= the To year (when To is not "Loan Payoff")
+  Array.from($('customFrom').options).forEach(opt => {
+    if (opt.value === '0') { opt.disabled = false; return; }
+    opt.disabled = toVal !== 999 && parseInt(opt.value) >= toVal;
+  });
+
+  // If current To selection is now invalid, bump to Loan Payoff
+  if ($('customTo').options[$('customTo').selectedIndex].disabled) {
+    $('customTo').value = '999';
+  }
+  // If current From selection is now invalid, reset to Loan Inception
+  if ($('customFrom').options[$('customFrom').selectedIndex].disabled) {
+    $('customFrom').value = '0';
+  }
+
   calculate();
 }
 
@@ -1265,6 +1414,12 @@ function calculate() {
   const stateCode = $('state').value;
   const extraMode = $('extraMode').value;
   const extraPmt  = parseDollar($('extraAmt')) || 0;
+
+  // Custom range bounds
+  const customFromYr = parseInt($('customFrom').value) || 0;
+  const customToRaw  = $('customTo').value;
+  const fromMonth    = customFromYr === 0 ? 1 : customFromYr * 12 + 1;
+  const toMonth      = customToRaw === '999' ? Infinity : parseInt(customToRaw) * 12;
 
   const dp    = dpMode === 'percent' ? homeVal * (dpRaw / 100) : dpRaw;
   const dpCap = Math.min(dp, homeVal);
@@ -1289,7 +1444,7 @@ function calculate() {
   if (loan > 0) {
     base  = amortize(loan, annRate, termMo, homeVal, 0, 'none');
     extra = (extraMode !== 'none' && extraPmt > 0)
-            ? amortize(loan, annRate, termMo, homeVal, extraPmt, extraMode)
+            ? amortize(loan, annRate, termMo, homeVal, extraPmt, extraMode, fromMonth, toMonth)
             : null;
   }
 
@@ -1428,12 +1583,16 @@ function toggleAmort() {
     const termMo   = parseInt($('term').value)   || 360;
     const extraMode = $('extraMode').value;
     const extraPmt  = parseDollar($('extraAmt')) || 0;
+    const customFromYr = parseInt($('customFrom').value) || 0;
+    const customToRaw  = $('customTo').value;
+    const fromMonth    = customFromYr === 0 ? 1 : customFromYr * 12 + 1;
+    const toMonth      = customToRaw === '999' ? Infinity : parseInt(customToRaw) * 12;
     const dp   = dpMode === 'percent' ? homeVal * (dpRaw / 100) : dpRaw;
     const loan = Math.max(0, homeVal - Math.min(dp, homeVal));
 
     if (loan > 0) {
       const result = (extraMode !== 'none' && extraPmt > 0)
-        ? amortize(loan, annRate, termMo, homeVal, extraPmt, extraMode)
+        ? amortize(loan, annRate, termMo, homeVal, extraPmt, extraMode, fromMonth, toMonth)
         : amortize(loan, annRate, termMo, homeVal, 0, 'none');
       renderTable(result, homeVal);
     }
