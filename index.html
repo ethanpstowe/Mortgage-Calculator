@@ -720,9 +720,14 @@
 <header class="header">
   <h1>Mortgage Calculator</h1>
   <p>Enter your details to calculate your mortgage</p>
+  <div class="seg" id="calc-switcher" style="margin-top:12px;max-width:400px;">
+    <div class="seg-pill" id="switcherPill"></div>
+    <button id="btnMortgage" class="active" onclick="switchCalc('mortgage')">Mortgage Calculator</button>
+    <button id="btnSavings" onclick="switchCalc('savings')">Savings Calculator</button>
+  </div>
 </header>
 
-<div class="wrap">
+<div class="wrap" id="mortgage-calculator-view">
 
   <!-- ── Loan Details ── -->
   <div class="card">
@@ -1039,6 +1044,85 @@
 
     </div>
   </section>
+
+</div>
+
+<!-- ── Savings Calculator View ── -->
+<div class="wrap" id="savings-calculator-view" style="display:none;">
+
+  <!-- Inputs -->
+  <div class="card">
+    <div class="card-title">Savings Goal</div>
+
+    <div class="field">
+      <label class="lbl" for="sc-home-price">Home Price</label>
+      <div class="input-wrap">
+        <span class="pfx">$</span>
+        <input type="text" inputmode="numeric" id="sc-home-price" placeholder="400,000" value="400,000" oninput="calcSavings()">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="sc-dp-pct">Down Payment Target</label>
+      <div class="input-wrap">
+        <input type="number" id="sc-dp-pct" class="no-pfx" step="1" min="1" max="100" value="20" oninput="calcSavings()">
+        <span class="sfx">%</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="sc-current-savings">Current Savings</label>
+      <div class="input-wrap">
+        <span class="pfx">$</span>
+        <input type="text" inputmode="numeric" id="sc-current-savings" placeholder="0" value="0" oninput="calcSavings()">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="sc-monthly-contrib">Monthly Savings Contribution</label>
+      <div class="input-wrap">
+        <span class="pfx">$</span>
+        <input type="text" inputmode="numeric" id="sc-monthly-contrib" placeholder="1,000" value="1,000" oninput="calcSavings()">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="sc-annual-rate">Annual Return on Savings</label>
+      <div class="input-wrap">
+        <input type="number" id="sc-annual-rate" class="no-pfx" step="0.1" min="0" max="50" value="4.5" oninput="calcSavings()">
+        <span class="sfx">%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="card" id="sc-result-card" style="background:linear-gradient(160deg,rgba(48,209,88,.05) 0%,#ffffff 55%);border:1px solid rgba(48,209,88,.18);box-shadow:0 4px 28px rgba(48,209,88,.09);">
+    <div class="card-title">Savings Projection</div>
+
+    <div class="b-total output" id="sc-time-output">
+      <span class="tl">Time to Goal</span>
+      <span class="tv output" id="sc-time" style="color:var(--green);">—</span>
+    </div>
+
+    <div class="stat-grid" style="margin-top:16px;">
+      <div class="stat">
+        <div class="stat-lbl">Down Payment Goal</div>
+        <div class="stat-val output" id="sc-goal">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-lbl">Final Savings</div>
+        <div class="stat-val output" id="sc-final">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-lbl">Total Contributions</div>
+        <div class="stat-val output" id="sc-contributions">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-lbl">Interest Earned</div>
+        <div class="stat-val output" id="sc-interest" style="color:var(--green);">—</div>
+      </div>
+    </div>
+  </div>
 
 </div>
 
@@ -2013,6 +2097,82 @@ function renderChart(pi, pmi, tax, ins, total) {
 //  BOOT
 // ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', init);
+</script>
+
+<script>
+// ── Savings Calculator ──────────────────────────────────────────────────────
+(function () {
+  function parseMoney(id) {
+    return parseFloat(document.getElementById(id).value.replace(/,/g, '')) || 0;
+  }
+
+  window.calcSavings = function () {
+    const homePrice    = parseMoney('sc-home-price');
+    const dpPct        = parseFloat(document.getElementById('sc-dp-pct').value)        || 0;
+    const currentSav   = parseMoney('sc-current-savings');
+    const monthlyContr = parseMoney('sc-monthly-contrib');
+    const annualRate   = parseFloat(document.getElementById('sc-annual-rate').value)   || 0;
+
+    const goal = homePrice * dpPct / 100;
+    const r    = annualRate / 100 / 12;
+
+    document.getElementById('sc-goal').textContent = fmtC(goal);
+
+    const blank = function () {
+      ['sc-time','sc-contributions','sc-interest','sc-final'].forEach(function(id){
+        document.getElementById(id).textContent = '—';
+      });
+    };
+
+    if (goal <= 0 || monthlyContr <= 0) { blank(); return; }
+
+    if (currentSav >= goal) {
+      document.getElementById('sc-time').textContent         = 'Already there!';
+      document.getElementById('sc-contributions').textContent = fmtD(0);
+      document.getElementById('sc-interest').textContent      = fmtD(0);
+      document.getElementById('sc-final').textContent         = fmtC(currentSav);
+      return;
+    }
+
+    var months;
+    if (r === 0) {
+      months = Math.ceil((goal - currentSav) / monthlyContr);
+    } else {
+      months = Math.ceil(
+        Math.log((monthlyContr + r * goal) / (monthlyContr + r * currentSav)) / Math.log(1 + r)
+      );
+    }
+
+    // simulate exact final balance
+    var balance = currentSav;
+    for (var i = 0; i < months; i++) { balance = balance * (1 + r) + monthlyContr; }
+
+    var totalContr   = monthlyContr * months;
+    var interest     = balance - currentSav - totalContr;
+    var years        = Math.floor(months / 12);
+    var remMo        = months % 12;
+
+    var timeStr;
+    if (years === 0)        timeStr = remMo + ' mo';
+    else if (remMo === 0)   timeStr = years + ' yr';
+    else                    timeStr = years + ' yr ' + remMo + ' mo';
+
+    document.getElementById('sc-time').textContent          = timeStr;
+    document.getElementById('sc-contributions').textContent  = fmtD(totalContr);
+    document.getElementById('sc-interest').textContent       = fmtD(interest);
+    document.getElementById('sc-final').textContent          = fmtC(balance);
+  };
+
+  window.switchCalc = function (mode) {
+    var isMortgage = mode === 'mortgage';
+    document.getElementById('mortgage-calculator-view').style.display = isMortgage ? '' : 'none';
+    document.getElementById('savings-calculator-view').style.display  = isMortgage ? 'none' : '';
+    document.getElementById('btnMortgage').classList.toggle('active', isMortgage);
+    document.getElementById('btnSavings').classList.toggle('active', !isMortgage);
+    document.getElementById('switcherPill').classList.toggle('right', !isMortgage);
+    if (!isMortgage) { calcSavings(); }
+  };
+}());
 </script>
 </body>
 </html>
