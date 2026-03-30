@@ -729,7 +729,7 @@
     .calc-hub-btn:hover { background: var(--bg); box-shadow: 0 2px 14px rgba(0,0,0,.11); }
     .calc-hub-btn svg { color: var(--blue); flex-shrink: 0; }
     .calc-hub-menu {
-      position: absolute; top: calc(100% + 8px); right: 0;
+      position: absolute; top: calc(100% + 8px); left: 0;
       background: rgba(255,255,255,.94);
       backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
       border: 1px solid var(--border);
@@ -767,12 +767,7 @@
 <body>
 
 <header class="header">
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
-    <div>
-      <h1 id="header-calc-title">Mortgage Calculator</h1>
-      <p id="header-calc-sub">Enter your details to calculate your mortgage</p>
-    </div>
-    <div class="calc-hub" id="calcHub">
+  <div class="calc-hub" id="calcHub" style="margin-bottom:10px;">
       <button class="calc-hub-btn" id="calcHubBtn" onclick="toggleCalcHub()" aria-haspopup="true" aria-expanded="false">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
           <rect x="0.5" y="0.5" width="5" height="5" rx="1.1" fill="currentColor"/>
@@ -804,8 +799,9 @@
           </svg>
         </div>
       </div>
-    </div>
   </div>
+  <h1 id="header-calc-title">Mortgage Calculator</h1>
+  <p id="header-calc-sub">Enter your details to calculate your mortgage</p>
 </header>
 
 <div class="wrap" id="mortgage-calculator-view">
@@ -840,6 +836,12 @@
         </div>
       </div>
       <p class="dp-equiv" id="dpEquiv"></p>
+      <button class="county-link" onclick="prefillSavingsGoal()" style="margin-top:6px;">
+        <svg class="pin-icon" width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+          <path d="M2 6.5h9M7.5 2l4.5 4.5L7.5 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="county-label">See how long it will take to save this down payment</span>
+      </button>
     </div>
 
     <div class="two-col">
@@ -1135,14 +1137,17 @@
   <div class="card" style="padding:14px 16px;">
     <div class="seg" id="scModeSeg">
       <div class="seg-pill" id="scModePill"></div>
-      <button id="scBtnTerm" class="active" onclick="scSetMode('term')">Save by Term</button>
-      <button id="scBtnGoal" onclick="scSetMode('goal')">Save to Goal</button>
+      <button id="scBtnTerm" class="active" onclick="scSetMode('term')">How much will I save?</button>
+      <button id="scBtnGoal" onclick="scSetMode('goal')">How long to reach my goal?</button>
     </div>
   </div>
 
   <!-- Inputs -->
   <div class="card">
-    <div class="card-title">Savings Details</div>
+    <div class="card-title-row">
+      <div class="card-title" style="margin-bottom:0">Savings Details</div>
+      <button class="btn-reset" onclick="scReset()">Reset</button>
+    </div>
 
     <div class="field">
       <label class="lbl" for="sc-start">Starting Savings</label>
@@ -1153,7 +1158,10 @@
     </div>
 
     <div class="field">
-      <label class="lbl" for="sc-rate">Expected Annual Return</label>
+      <label class="lbl" for="sc-rate">
+        Expected Annual Return
+        <button class="info-btn" onclick="showTip(this,'sc-rate')" aria-label="About expected annual return">i</button>
+      </label>
       <div class="input-wrap">
         <input type="number" id="sc-rate" class="no-pfx" step="0.1" min="0" max="50" value="4.5" oninput="scCalc()">
         <span class="sfx">%</span>
@@ -1161,7 +1169,10 @@
     </div>
 
     <div class="field">
-      <label class="lbl" for="sc-contrib">Monthly Contribution</label>
+      <label class="lbl" for="sc-contrib">
+        Monthly Contribution
+        <button class="info-btn" onclick="showTip(this,'sc-contrib')" aria-label="About monthly contribution">i</button>
+      </label>
       <div class="input-wrap">
         <span class="pfx">$</span>
         <input type="text" inputmode="numeric" id="sc-contrib" value="1,000" oninput="scCalc()">
@@ -1170,7 +1181,10 @@
 
     <!-- Term mode input -->
     <div class="field" id="sc-term-field">
-      <label class="lbl">Time Period</label>
+      <label class="lbl">
+        Time Period
+        <button class="info-btn" onclick="showTip(this,'sc-term')" aria-label="About time period">i</button>
+      </label>
       <div class="dp-row">
         <div class="input-wrap">
           <input type="number" id="sc-term" class="no-pfx" step="1" min="1" value="5" oninput="scCalc()">
@@ -1199,7 +1213,7 @@
 
     <div class="b-total">
       <span class="tl" id="sc-primary-label">Ending Balance</span>
-      <span class="tv output" id="sc-primary-val" style="color:var(--green);">—</span>
+      <span class="tv output" id="sc-primary-val" style="color:var(--blue);">—</span>
     </div>
 
     <div class="stat-grid" style="margin-top:16px;">
@@ -1340,6 +1354,9 @@ const TIPS = {
   rate:  "Your interest rate is the annual cost of borrowing money, expressed as a percentage of the loan. A lower rate means lower monthly payments and less total interest paid. Even a 0.5% difference can mean tens of thousands of dollars over the life of a 30-year loan.",
   term:  "Your loan term is how long you have to repay the loan. A 30-year term gives you lower monthly payments but you'll pay far more in total interest. A 15-year term costs more each month but you build equity faster and pay significantly less interest overall.",
   extra: "Paying extra toward your principal each month reduces your loan balance faster than your regular payment alone. This shrinks the amount interest is calculated on, so you pay less interest overall and pay off the loan sooner. Extra payments can also help you reach 20% equity faster — eliminating PMI earlier and reducing your monthly payment. When you select an extra payment amount, this calculator shows a side-by-side comparison of your total interest, PMI costs, and payoff date with and without the extra payment.",
+  'sc-rate':    "The average yearly return you expect on your savings. A high-yield savings account is typically 4–5%. An index fund historically averages 7–10%.",
+  'sc-contrib': "The amount you plan to add to your savings each month.",
+  'sc-term':    "How long you plan to save. Longer terms benefit more from compound interest.",
 };
 
 // ─────────────────────────────────────────────
@@ -2274,6 +2291,11 @@ document.addEventListener('DOMContentLoaded', init);
   };
 
   window.scSetTermUnit = function (unit) {
+    if (unit === scTermUnit) return;
+    var cur = parseFloat(el('sc-term').value) || 0;
+    var converted = unit === 'months' ? cur * 12 : cur / 12;
+    converted = Math.round(converted * 10) / 10;
+    el('sc-term').value = converted % 1 === 0 ? String(Math.round(converted)) : converted.toFixed(1);
     scTermUnit = unit;
     el('scBtnYrs').classList.toggle('active', unit === 'years');
     el('scBtnMos').classList.toggle('active', unit === 'months');
@@ -2479,9 +2501,21 @@ document.addEventListener('DOMContentLoaded', init);
               font: { family: SF, size: 12 },
               color: '#48484a',
               usePointStyle: true,
-              pointStyleWidth: 8,
-              boxHeight: 8,
+              pointStyle: 'line',
               padding: 14,
+              generateLabels: function (chart) {
+                return chart.data.datasets.map(function (ds, i) {
+                  return {
+                    text: ds.label,
+                    fillStyle: ds.borderColor,
+                    strokeStyle: ds.borderColor,
+                    lineWidth: 2,
+                    hidden: !chart.isDatasetVisible(i),
+                    datasetIndex: i,
+                    pointStyle: 'line',
+                  };
+                });
+              },
             },
           },
           tooltip: {
@@ -2530,6 +2564,36 @@ document.addEventListener('DOMContentLoaded', init);
       },
     });
   }
+  // ── Reset ────────────────────────────────────────────────────────────
+  window.scReset = function () {
+    el('sc-start').value   = '0';
+    el('sc-rate').value    = '4.5';
+    el('sc-contrib').value = '1,000';
+    el('sc-term').value    = '5';
+    el('sc-target').value  = '80,000';
+    scMode = 'term'; scTermUnit = 'years';
+    el('scBtnTerm').classList.add('active');
+    el('scBtnGoal').classList.remove('active');
+    el('scModePill').classList.remove('right');
+    el('sc-term-field').style.display = '';
+    el('sc-goal-field').style.display = 'none';
+    el('sc-primary-label').textContent = 'Ending Balance';
+    el('sc-primary-val').textContent   = '—';
+    el('scBtnYrs').classList.add('active');
+    el('scBtnMos').classList.remove('active');
+    el('scTermPill').classList.remove('right');
+    scCalc();
+  };
+
+  // ── Prefill from mortgage down payment ───────────────────────────────
+  window.prefillSavingsGoal = function () {
+    var hv  = parseDollar($('homeValue'));
+    var raw = parseDollar($('downPayment'));
+    var dp  = dpMode === 'dollar' ? raw : Math.round(hv * raw / 100);
+    el('sc-target').value = Math.round(dp).toLocaleString('en-US');
+    selectCalc('savings');
+    scSetMode('goal');
+  };
 }());
 </script>
 </body>
