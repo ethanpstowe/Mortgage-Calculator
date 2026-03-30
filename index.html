@@ -806,6 +806,23 @@
       .sc-results-card { padding: 18px; }
     }
 
+    /* ── Savings rate preset pills ── */
+    label[for="sc-rate"] { flex-wrap: wrap; }
+    .sc-presets { margin-left: auto; display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+    .sc-preset-btn {
+      font-size: 11px; font-weight: 600; font-family: inherit;
+      padding: 3px 9px; border-radius: 20px; line-height: 1.4;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text2);
+      cursor: pointer; white-space: nowrap;
+      transition: background .2s cubic-bezier(.34,1.56,.64,1),
+                  color .2s cubic-bezier(.34,1.56,.64,1),
+                  border-color .2s cubic-bezier(.34,1.56,.64,1),
+                  transform .15s cubic-bezier(.34,1.56,.64,1);
+    }
+    .sc-preset-btn:hover:not(.active) { background: var(--border); color: var(--text); }
+    .sc-preset-btn:active { transform: scale(.95); }
+    .sc-preset-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
     /* ── Savings calc ── */
     .sc-chart-canvas-wrap { position: relative; height: 200px; margin-top: 4px; }
     @media (max-width: 480px) {
@@ -1211,9 +1228,13 @@
       <label class="lbl" for="sc-rate">
         Expected Annual Return
         <button class="info-btn" onclick="showTip(this,'sc-rate')" aria-label="About expected annual return">i</button>
+        <span class="sc-presets">
+          <button class="sc-preset-btn" id="sc-preset-hysa" onclick="scSetRate(4.0)" type="button">HYSA</button>
+          <button class="sc-preset-btn" id="sc-preset-idx"  onclick="scSetRate(7.5)" type="button">Index Fund</button>
+        </span>
       </label>
       <div class="input-wrap">
-        <input type="number" id="sc-rate" class="no-pfx" step="0.1" min="0" max="50" value="4.5" oninput="scCalc()">
+        <input type="number" id="sc-rate" class="no-pfx" step="0.1" min="0" max="50" value="4.5" oninput="scCalc();scUpdateRatePresets()">
         <span class="sfx">%</span>
       </div>
     </div>
@@ -2637,6 +2658,21 @@ document.addEventListener('DOMContentLoaded', init);
     el('scBtnYrs').classList.add('active');
     el('scBtnMos').classList.remove('active');
     el('scTermPill').classList.remove('right');
+    scUpdateRatePresets();
+    scCalc();
+  };
+
+  // ── Rate preset pills ─────────────────────────────────────────────────
+  function scUpdateRatePresets() {
+    var v = parseFloat(el('sc-rate').value);
+    el('sc-preset-hysa').classList.toggle('active', v === 4.0);
+    el('sc-preset-idx').classList.toggle('active',  v === 7.5);
+  }
+
+  window.scSetRate = function (val) {
+    if (parseFloat(el('sc-rate').value) === val) return;
+    el('sc-rate').value = val;
+    scUpdateRatePresets();
     scCalc();
   };
 
