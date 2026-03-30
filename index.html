@@ -791,6 +791,16 @@
     .sc-tile-val { font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums; }
     .sc-stat-tile.sc-blue  .sc-tile-val { color: var(--blue); }
     .sc-stat-tile.sc-green .sc-tile-val { color: var(--green); }
+    .sc-donut-section {
+      align-items: center; gap: 20px;
+      padding: 20px 0 6px;
+      border-top: 1px solid var(--border);
+      margin-top: 20px;
+    }
+    @media (max-width: 500px) {
+      .sc-donut-section { flex-direction: column; align-items: center; gap: 14px; }
+      .sc-donut-section .chart-legend { width: 100%; }
+    }
     @media (max-width: 480px) {
       .sc-hero-val { font-size: 2.2rem; }
       .sc-results-card { padding: 18px; }
@@ -1273,7 +1283,7 @@
     </div>
 
     <!-- Donut chart (hidden until data exists) -->
-    <div id="sc-chart-section" style="display:none;align-items:center;gap:20px;padding:20px 0 6px;border-top:1px solid var(--border);margin-top:20px;">
+    <div id="sc-chart-section" class="sc-donut-section" style="display:none;">
       <div class="donut-wrap">
         <svg viewBox="0 0 100 100" id="sc-donut-svg" aria-hidden="true"></svg>
         <div class="donut-center-text">
