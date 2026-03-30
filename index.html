@@ -632,6 +632,10 @@
       .seg         { height: 52px; }
       .seg button  { font-size: 16px; padding: 0 20px; }
       .seg-pill    { border-radius: 8px; }
+
+      /* savings mode toggle — long labels need smaller text and equal widths */
+      #scModeSeg              { max-width: 100%; }
+      #scModeSeg button       { font-size: 13px; padding: 0 8px; width: 50%; white-space: normal; line-height: 1.25; }
     }
     @media (max-width: 380px) {
       .two-col { gap: 6px; }
