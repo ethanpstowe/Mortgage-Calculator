@@ -713,17 +713,98 @@
     @media (max-width: 640px) {
       .edu-grid { grid-template-columns: 1fr; }
     }
+
+    /* ── Calculator Hub picker ── */
+    .calc-hub { position: relative; }
+    .calc-hub-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 14px; font-weight: 600; color: var(--text);
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 8px 14px 8px 12px;
+      cursor: pointer; font-family: inherit;
+      box-shadow: 0 1px 8px rgba(0,0,0,.08);
+      transition: background .15s, box-shadow .15s;
+      white-space: nowrap;
+    }
+    .calc-hub-btn:hover { background: var(--bg); box-shadow: 0 2px 14px rgba(0,0,0,.11); }
+    .calc-hub-btn svg { color: var(--blue); flex-shrink: 0; }
+    .calc-hub-menu {
+      position: absolute; top: calc(100% + 8px); right: 0;
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: 0 8px 36px rgba(0,0,0,.14);
+      padding: 6px; min-width: 228px;
+      opacity: 0; transform: translateY(-8px) scale(.97);
+      pointer-events: none;
+      transition: opacity .18s cubic-bezier(.4,0,.2,1), transform .18s cubic-bezier(.4,0,.2,1);
+      z-index: 200;
+    }
+    .calc-hub-menu.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+    .calc-hub-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 9px; cursor: pointer;
+      font-size: 15px; font-family: inherit; color: var(--text);
+      user-select: none; transition: background .12s;
+    }
+    .calc-hub-item:hover { background: var(--blue-glow); }
+    .calc-hub-item.active { font-weight: 600; }
+    .calc-hub-item .hub-icon { color: var(--blue); flex-shrink: 0; }
+    .calc-hub-item .hub-check {
+      margin-left: auto; color: var(--blue); flex-shrink: 0;
+      opacity: 0; transition: opacity .12s;
+    }
+    .calc-hub-item.active .hub-check { opacity: 1; }
+
+    /* ── Savings calc ── */
+    .sc-chart-canvas-wrap { position: relative; height: 200px; margin-top: 4px; }
+    @media (max-width: 480px) {
+      .sc-chart-canvas-wrap { height: 160px; }
+      .calc-hub-btn { font-size: 13px; padding: 7px 12px 7px 10px; }
+    }
   </style>
 </head>
 <body>
 
 <header class="header">
-  <h1>Mortgage Calculator</h1>
-  <p>Enter your details to calculate your mortgage</p>
-  <div class="seg" id="calc-switcher" style="margin-top:12px;max-width:400px;">
-    <div class="seg-pill" id="switcherPill"></div>
-    <button id="btnMortgage" class="active" onclick="switchCalc('mortgage')">Mortgage Calculator</button>
-    <button id="btnSavings" onclick="switchCalc('savings')">Savings Calculator</button>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+    <div>
+      <h1 id="header-calc-title">Mortgage Calculator</h1>
+      <p id="header-calc-sub">Enter your details to calculate your mortgage</p>
+    </div>
+    <div class="calc-hub" id="calcHub">
+      <button class="calc-hub-btn" id="calcHubBtn" onclick="toggleCalcHub()" aria-haspopup="true" aria-expanded="false">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <rect x="0.5" y="0.5" width="5" height="5" rx="1.1" fill="currentColor"/>
+          <rect x="8.5" y="0.5" width="5" height="5" rx="1.1" fill="currentColor"/>
+          <rect x="0.5" y="8.5" width="5" height="5" rx="1.1" fill="currentColor"/>
+          <rect x="8.5" y="8.5" width="5" height="5" rx="1.1" fill="currentColor"/>
+        </svg>
+        Calculators
+      </button>
+      <div class="calc-hub-menu" id="calcHubMenu" role="menu">
+        <div class="calc-hub-item active" id="hubItemMortgage" onclick="selectCalc('mortgage')" role="menuitem">
+          <svg class="hub-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M1.5 7.5L8 2l6.5 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3.5 6.2V13a.5.5 0 00.5.5H6V10h4v3.5h2a.5.5 0 00.5-.5V6.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Mortgage Calculator
+          <svg class="hub-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2.5 7l3.5 3.5 6-6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="calc-hub-item" id="hubItemSavings" onclick="selectCalc('savings')" role="menuitem">
+          <svg class="hub-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 5v3.5l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Home Savings Calculator
+          <svg class="hub-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2.5 7l3.5 3.5 6-6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -1050,77 +1131,106 @@
 <!-- ── Savings Calculator View ── -->
 <div class="wrap" id="savings-calculator-view" style="display:none;">
 
+  <!-- Mode switcher -->
+  <div class="card" style="padding:14px 16px;">
+    <div class="seg" id="scModeSeg">
+      <div class="seg-pill" id="scModePill"></div>
+      <button id="scBtnTerm" class="active" onclick="scSetMode('term')">Save by Term</button>
+      <button id="scBtnGoal" onclick="scSetMode('goal')">Save to Goal</button>
+    </div>
+  </div>
+
   <!-- Inputs -->
   <div class="card">
-    <div class="card-title">Savings Goal</div>
+    <div class="card-title">Savings Details</div>
 
     <div class="field">
-      <label class="lbl" for="sc-home-price">Home Price</label>
+      <label class="lbl" for="sc-start">Starting Savings</label>
       <div class="input-wrap">
         <span class="pfx">$</span>
-        <input type="text" inputmode="numeric" id="sc-home-price" placeholder="400,000" value="400,000" oninput="calcSavings()">
+        <input type="text" inputmode="numeric" id="sc-start" value="0" oninput="scCalc()">
       </div>
     </div>
 
     <div class="field">
-      <label class="lbl" for="sc-dp-pct">Down Payment Target</label>
+      <label class="lbl" for="sc-rate">Expected Annual Return</label>
       <div class="input-wrap">
-        <input type="number" id="sc-dp-pct" class="no-pfx" step="1" min="1" max="100" value="20" oninput="calcSavings()">
+        <input type="number" id="sc-rate" class="no-pfx" step="0.1" min="0" max="50" value="4.5" oninput="scCalc()">
         <span class="sfx">%</span>
       </div>
     </div>
 
     <div class="field">
-      <label class="lbl" for="sc-current-savings">Current Savings</label>
+      <label class="lbl" for="sc-contrib">Monthly Contribution</label>
       <div class="input-wrap">
         <span class="pfx">$</span>
-        <input type="text" inputmode="numeric" id="sc-current-savings" placeholder="0" value="0" oninput="calcSavings()">
+        <input type="text" inputmode="numeric" id="sc-contrib" value="1,000" oninput="scCalc()">
       </div>
     </div>
 
-    <div class="field">
-      <label class="lbl" for="sc-monthly-contrib">Monthly Savings Contribution</label>
-      <div class="input-wrap">
-        <span class="pfx">$</span>
-        <input type="text" inputmode="numeric" id="sc-monthly-contrib" placeholder="1,000" value="1,000" oninput="calcSavings()">
+    <!-- Term mode input -->
+    <div class="field" id="sc-term-field">
+      <label class="lbl">Time Period</label>
+      <div class="dp-row">
+        <div class="input-wrap">
+          <input type="number" id="sc-term" class="no-pfx" step="1" min="1" value="5" oninput="scCalc()">
+        </div>
+        <div class="seg">
+          <div class="seg-pill" id="scTermPill"></div>
+          <button id="scBtnYrs" class="active" onclick="scSetTermUnit('years')">Yrs</button>
+          <button id="scBtnMos" onclick="scSetTermUnit('months')">Mos</button>
+        </div>
       </div>
     </div>
 
-    <div class="field">
-      <label class="lbl" for="sc-annual-rate">Annual Return on Savings</label>
+    <!-- Goal mode input -->
+    <div class="field" id="sc-goal-field" style="display:none;">
+      <label class="lbl" for="sc-target">Target Ending Balance</label>
       <div class="input-wrap">
-        <input type="number" id="sc-annual-rate" class="no-pfx" step="0.1" min="0" max="50" value="4.5" oninput="calcSavings()">
-        <span class="sfx">%</span>
+        <span class="pfx">$</span>
+        <input type="text" inputmode="numeric" id="sc-target" value="80,000" oninput="scCalc()">
       </div>
     </div>
   </div>
 
-  <!-- Result -->
-  <div class="card" id="sc-result-card" style="background:linear-gradient(160deg,rgba(48,209,88,.05) 0%,#ffffff 55%);border:1px solid rgba(48,209,88,.18);box-shadow:0 4px 28px rgba(48,209,88,.09);">
+  <!-- Results -->
+  <div class="card" style="background:linear-gradient(160deg,rgba(48,209,88,.05) 0%,#ffffff 55%);border:1px solid rgba(48,209,88,.18);box-shadow:0 4px 28px rgba(48,209,88,.09);">
     <div class="card-title">Savings Projection</div>
 
-    <div class="b-total output" id="sc-time-output">
-      <span class="tl">Time to Goal</span>
-      <span class="tv output" id="sc-time" style="color:var(--green);">—</span>
+    <div class="b-total">
+      <span class="tl" id="sc-primary-label">Ending Balance</span>
+      <span class="tv output" id="sc-primary-val" style="color:var(--green);">—</span>
     </div>
 
     <div class="stat-grid" style="margin-top:16px;">
       <div class="stat">
-        <div class="stat-lbl">Down Payment Goal</div>
-        <div class="stat-val output" id="sc-goal">—</div>
-      </div>
-      <div class="stat">
-        <div class="stat-lbl">Final Savings</div>
-        <div class="stat-val output" id="sc-final">—</div>
-      </div>
-      <div class="stat">
         <div class="stat-lbl">Total Contributions</div>
-        <div class="stat-val output" id="sc-contributions">—</div>
+        <div class="stat-val output" id="sc-stat-contrib">—</div>
       </div>
       <div class="stat">
         <div class="stat-lbl">Interest Earned</div>
-        <div class="stat-val output" id="sc-interest" style="color:var(--green);">—</div>
+        <div class="stat-val output" id="sc-stat-interest" style="color:var(--green);">—</div>
       </div>
+    </div>
+
+    <!-- Donut chart (hidden until data exists) -->
+    <div id="sc-chart-section" style="display:none;align-items:center;gap:20px;padding:18px 0 6px;border-top:1px solid var(--border);margin-top:16px;">
+      <div class="donut-wrap">
+        <svg viewBox="0 0 100 100" id="sc-donut-svg" aria-hidden="true"></svg>
+        <div class="donut-center-text">
+          <span class="dct-lbl">Total</span>
+          <span class="dct-val" id="sc-donut-total">—</span>
+        </div>
+      </div>
+      <div class="chart-legend" id="sc-chart-legend"></div>
+    </div>
+  </div>
+
+  <!-- Line chart -->
+  <div class="card" id="sc-line-card" style="display:none;">
+    <div class="card-title">Growth Over Time</div>
+    <div class="sc-chart-canvas-wrap">
+      <canvas id="sc-line-chart"></canvas>
     </div>
   </div>
 
@@ -2099,79 +2209,327 @@ function renderChart(pi, pmi, tax, ins, total) {
 document.addEventListener('DOMContentLoaded', init);
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
-// ── Savings Calculator ──────────────────────────────────────────────────────
+// ── Calculator Hub + Savings Calculator ────────────────────────────────────
 (function () {
+  'use strict';
+
+  // ── State ────────────────────────────────────────────────────────────
+  var scMode     = 'term';   // 'term' | 'goal'
+  var scTermUnit = 'years';  // 'years' | 'months'
+  var hubOpen    = false;
+  var lineChart  = null;
+
+  // ── Helpers ──────────────────────────────────────────────────────────
+  function el(id) { return document.getElementById(id); }
   function parseMoney(id) {
-    return parseFloat(document.getElementById(id).value.replace(/,/g, '')) || 0;
+    return parseFloat(el(id).value.replace(/,/g, '')) || 0;
   }
 
-  window.calcSavings = function () {
-    const homePrice    = parseMoney('sc-home-price');
-    const dpPct        = parseFloat(document.getElementById('sc-dp-pct').value)        || 0;
-    const currentSav   = parseMoney('sc-current-savings');
-    const monthlyContr = parseMoney('sc-monthly-contrib');
-    const annualRate   = parseFloat(document.getElementById('sc-annual-rate').value)   || 0;
-
-    const goal = homePrice * dpPct / 100;
-    const r    = annualRate / 100 / 12;
-
-    document.getElementById('sc-goal').textContent = fmtC(goal);
-
-    const blank = function () {
-      ['sc-time','sc-contributions','sc-interest','sc-final'].forEach(function(id){
-        document.getElementById(id).textContent = '—';
-      });
-    };
-
-    if (goal <= 0 || monthlyContr <= 0) { blank(); return; }
-
-    if (currentSav >= goal) {
-      document.getElementById('sc-time').textContent         = 'Already there!';
-      document.getElementById('sc-contributions').textContent = fmtD(0);
-      document.getElementById('sc-interest').textContent      = fmtD(0);
-      document.getElementById('sc-final').textContent         = fmtC(currentSav);
-      return;
-    }
-
-    var months;
-    if (r === 0) {
-      months = Math.ceil((goal - currentSav) / monthlyContr);
-    } else {
-      months = Math.ceil(
-        Math.log((monthlyContr + r * goal) / (monthlyContr + r * currentSav)) / Math.log(1 + r)
-      );
-    }
-
-    // simulate exact final balance
-    var balance = currentSav;
-    for (var i = 0; i < months; i++) { balance = balance * (1 + r) + monthlyContr; }
-
-    var totalContr   = monthlyContr * months;
-    var interest     = balance - currentSav - totalContr;
-    var years        = Math.floor(months / 12);
-    var remMo        = months % 12;
-
-    var timeStr;
-    if (years === 0)        timeStr = remMo + ' mo';
-    else if (remMo === 0)   timeStr = years + ' yr';
-    else                    timeStr = years + ' yr ' + remMo + ' mo';
-
-    document.getElementById('sc-time').textContent          = timeStr;
-    document.getElementById('sc-contributions').textContent  = fmtD(totalContr);
-    document.getElementById('sc-interest').textContent       = fmtD(interest);
-    document.getElementById('sc-final').textContent          = fmtC(balance);
+  // ── Calculator Hub ────────────────────────────────────────────────────
+  window.toggleCalcHub = function () {
+    hubOpen = !hubOpen;
+    el('calcHubMenu').classList.toggle('open', hubOpen);
+    el('calcHubBtn').setAttribute('aria-expanded', String(hubOpen));
   };
 
-  window.switchCalc = function (mode) {
+  document.addEventListener('click', function (e) {
+    var hub = el('calcHub');
+    if (hub && !hub.contains(e.target)) {
+      hubOpen = false;
+      el('calcHubMenu').classList.remove('open');
+      el('calcHubBtn').setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  window.selectCalc = function (mode) {
     var isMortgage = mode === 'mortgage';
-    document.getElementById('mortgage-calculator-view').style.display = isMortgage ? '' : 'none';
-    document.getElementById('savings-calculator-view').style.display  = isMortgage ? 'none' : '';
-    document.getElementById('btnMortgage').classList.toggle('active', isMortgage);
-    document.getElementById('btnSavings').classList.toggle('active', !isMortgage);
-    document.getElementById('switcherPill').classList.toggle('right', !isMortgage);
-    if (!isMortgage) { calcSavings(); }
+    el('mortgage-calculator-view').style.display = isMortgage ? '' : 'none';
+    el('savings-calculator-view').style.display  = isMortgage ? 'none' : '';
+    el('hubItemMortgage').classList.toggle('active', isMortgage);
+    el('hubItemSavings').classList.toggle('active', !isMortgage);
+    el('header-calc-title').textContent = isMortgage
+      ? 'Mortgage Calculator' : 'Home Savings Calculator';
+    el('header-calc-sub').textContent = isMortgage
+      ? 'Enter your details to calculate your mortgage'
+      : 'Project your savings growth over time';
+    hubOpen = false;
+    el('calcHubMenu').classList.remove('open');
+    el('calcHubBtn').setAttribute('aria-expanded', 'false');
+    if (!isMortgage) { scCalc(); }
   };
+
+  // ── Mode + unit switchers ─────────────────────────────────────────────
+  window.scSetMode = function (mode) {
+    scMode = mode;
+    var isTerm = mode === 'term';
+    el('scBtnTerm').classList.toggle('active', isTerm);
+    el('scBtnGoal').classList.toggle('active', !isTerm);
+    el('scModePill').classList.toggle('right', !isTerm);
+    el('sc-term-field').style.display = isTerm ? '' : 'none';
+    el('sc-goal-field').style.display = isTerm ? 'none' : '';
+    el('sc-primary-label').textContent = isTerm ? 'Ending Balance' : 'Time to Reach Goal';
+    scCalc();
+  };
+
+  window.scSetTermUnit = function (unit) {
+    scTermUnit = unit;
+    el('scBtnYrs').classList.toggle('active', unit === 'years');
+    el('scBtnMos').classList.toggle('active', unit === 'months');
+    el('scTermPill').classList.toggle('right', unit === 'months');
+    scCalc();
+  };
+
+  // ── Core calculation ──────────────────────────────────────────────────
+  window.scCalc = function () {
+    var start   = parseMoney('sc-start');
+    var rate    = parseFloat(el('sc-rate').value)   || 0;
+    var contrib = parseMoney('sc-contrib');
+    var r       = rate / 100 / 12;
+
+    var months, balance, totalContrib, interest;
+    var mArr = [], balArr = [], conArr = [];
+
+    if (scMode === 'term') {
+      var termRaw = parseFloat(el('sc-term').value) || 0;
+      months = scTermUnit === 'years'
+        ? Math.round(termRaw * 12) : Math.round(termRaw);
+      months = Math.max(1, Math.min(months, 1200));
+
+      balance = start;
+      for (var i = 1; i <= months; i++) {
+        balance = balance * (1 + r) + contrib;
+        mArr.push(i);
+        balArr.push(balance);
+        conArr.push(start + contrib * i);
+      }
+      totalContrib = contrib * months;
+      interest     = balance - start - totalContrib;
+      el('sc-primary-val').textContent = fmtC(balance);
+
+    } else { // goal mode
+      var target = parseMoney('sc-target');
+
+      if (target <= 0 || contrib <= 0) { clearScOutputs(); return; }
+
+      if (start >= target) {
+        el('sc-primary-val').textContent    = 'Already there!';
+        el('sc-stat-contrib').textContent   = fmtD(0);
+        el('sc-stat-interest').textContent  = fmtD(0);
+        renderScDonut(start, 0);
+        destroyLineChart();
+        el('sc-line-card').style.display = 'none';
+        return;
+      }
+
+      if (r === 0) {
+        months = Math.ceil((target - start) / contrib);
+      } else {
+        months = Math.ceil(
+          Math.log((contrib + r * target) / (contrib + r * start)) / Math.log(1 + r)
+        );
+      }
+      months = Math.min(months, 1200);
+
+      balance = start;
+      for (var j = 1; j <= months; j++) {
+        balance = balance * (1 + r) + contrib;
+        mArr.push(j);
+        balArr.push(balance);
+        conArr.push(start + contrib * j);
+      }
+      totalContrib = contrib * months;
+      interest     = balance - start - totalContrib;
+
+      var yrs = Math.floor(months / 12), rem = months % 12;
+      el('sc-primary-val').textContent = yrs === 0 ? rem + ' mo'
+        : rem === 0 ? yrs + ' yr' : yrs + ' yr ' + rem + ' mo';
+    }
+
+    el('sc-stat-contrib').textContent  = fmtD(start + totalContrib);
+    el('sc-stat-interest').textContent = fmtD(Math.max(0, interest));
+    renderScDonut(start + totalContrib, Math.max(0, interest));
+    renderLineChart(
+      sampleSeries(mArr, balArr, conArr, months)
+    );
+  };
+
+  function clearScOutputs() {
+    el('sc-primary-val').textContent   = '—';
+    el('sc-stat-contrib').textContent  = '—';
+    el('sc-stat-interest').textContent = '—';
+    el('sc-chart-section').style.display = 'none';
+    el('sc-line-card').style.display     = 'none';
+    destroyLineChart();
+  }
+
+  // ── Data sampling (max ~60 pts for chart) ─────────────────────────────
+  function sampleSeries(mArr, balArr, conArr, total) {
+    var step = Math.max(1, Math.floor(total / 60));
+    var labels = [], bal = [], con = [];
+    for (var i = 0; i < mArr.length; i++) {
+      if (i % step === 0 || i === mArr.length - 1) {
+        labels.push(mArr[i]);
+        bal.push(Math.round(balArr[i]));
+        con.push(Math.round(conArr[i]));
+      }
+    }
+    return { labels: labels, bal: bal, con: con };
+  }
+
+  // ── SVG Donut (mirrors existing renderChart style) ────────────────────
+  function renderScDonut(contributions, interest) {
+    var section = el('sc-chart-section');
+    var total   = contributions + interest;
+    if (total <= 0) { section.style.display = 'none'; return; }
+    section.style.display = 'flex';
+
+    var segs = [
+      { val: contributions, color: '#007aff', label: 'Contributions'  },
+      { val: interest,      color: '#30d158', label: 'Interest Earned' },
+    ].filter(function (s) { return s.val > 0; });
+
+    var r = 36, cx = 50, cy = 50;
+    var circ = 2 * Math.PI * r;
+    var gap  = 0.012 * circ;
+    var startDeg = -90, svg = '';
+
+    segs.forEach(function (s) {
+      var pct    = s.val / total;
+      var segLen = Math.max(0, pct * circ - (segs.length > 1 ? gap : 0));
+      svg +=
+        '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '"' +
+        ' fill="none" stroke="' + s.color + '" stroke-width="14"' +
+        ' stroke-dasharray="' + segLen.toFixed(3) + ' ' + (circ - segLen).toFixed(3) + '"' +
+        ' transform="rotate(' + startDeg.toFixed(3) + ',' + cx + ',' + cy + ')"/>';
+      startDeg += pct * 360;
+    });
+    svg += '<circle cx="' + cx + '" cy="' + cy + '" r="29" fill="white"/>';
+    el('sc-donut-svg').innerHTML = svg;
+    el('sc-donut-total').textContent = fmtC(total);
+
+    el('sc-chart-legend').innerHTML = segs.map(function (s) {
+      return '<div class="legend-item">' +
+        '<span class="legend-dot" style="background:' + s.color + '"></span>' +
+        '<span class="legend-label">' + s.label + '</span>' +
+        '<span class="legend-val">' + fmtC(s.val) + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  // ── Chart.js line chart ───────────────────────────────────────────────
+  function destroyLineChart() {
+    if (lineChart) { lineChart.destroy(); lineChart = null; }
+  }
+
+  function fmtK(v) {
+    if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'K';
+    return '$' + v;
+  }
+
+  function renderLineChart(d) {
+    var card = el('sc-line-card');
+    if (!window.Chart) { card.style.display = 'none'; return; }
+
+    card.style.display = '';
+    destroyLineChart();
+
+    var SF = "-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif";
+    var ctx = el('sc-line-chart').getContext('2d');
+
+    lineChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: d.labels,
+        datasets: [
+          {
+            label: 'Total Balance',
+            data: d.bal,
+            borderColor: '#30d158',
+            backgroundColor: 'rgba(48,209,88,.09)',
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: true,
+            tension: 0.4,
+            order: 1,
+          },
+          {
+            label: 'Contributions',
+            data: d.con,
+            borderColor: '#007aff',
+            backgroundColor: 'rgba(0,122,255,.07)',
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: true,
+            tension: 0.4,
+            order: 2,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              font: { family: SF, size: 12 },
+              color: '#48484a',
+              usePointStyle: true,
+              pointStyleWidth: 8,
+              boxHeight: 8,
+              padding: 14,
+            },
+          },
+          tooltip: {
+            backgroundColor: '#1c1c1e',
+            titleColor: '#f2f2f7',
+            bodyColor: '#ebebf5',
+            cornerRadius: 10,
+            padding: 10,
+            callbacks: {
+              title: function (items) {
+                var mo = items[0].label;
+                var y = Math.floor(mo / 12), m = mo % 12;
+                return y === 0 ? 'Month ' + mo
+                  : m === 0 ? y + ' yr' : y + ' yr ' + m + ' mo';
+              },
+              label: function (item) {
+                return ' ' + item.dataset.label + ': ' + fmtC(item.raw);
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { color: '#e5e5ea', lineWidth: 0.5 },
+            ticks: {
+              font: { family: SF, size: 11 },
+              color: '#8e8e93',
+              maxTicksLimit: 8,
+              callback: function (val) {
+                var mo = this.getLabelForValue(val);
+                var y  = Math.floor(mo / 12);
+                return y > 0 ? y + 'y' : mo + 'mo';
+              },
+            },
+          },
+          y: {
+            grid: { color: '#e5e5ea', lineWidth: 0.5 },
+            beginAtZero: true,
+            ticks: {
+              font: { family: SF, size: 11 },
+              color: '#8e8e93',
+              callback: function (v) { return fmtK(v); },
+            },
+          },
+        },
+      },
+    });
+  }
 }());
 </script>
 </body>
